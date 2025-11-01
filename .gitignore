@@ -1,0 +1,88 @@
+###############################
+# Unity .gitignore — tuned template
+###############################
+# Inspired by GitHub Unity template + localized adjustments
+
+# --- Unity generated folders ---
+ProiectCTIJ/Library/
+ProiectCTIJ/Temp/
+ProiectCTIJ/Obj/
+ProiectCTIJ/Build/
+ProiectCTIJ/Builds/
+ProiectCTIJ/Logs/
+ProiectCTIJ/MemoryCaptures/
+
+# User-specific settings
+ProiectCTIJ/UserSettings/
+
+# --- Visual Studio / Rider / IDE ---
+.vs/
+.vscode/
+.idea/
+*.suo
+*.user
+*.userprefs
+*.csproj
+*.sln
+*.unityproj
+*.pidb
+*.booproj
+
+# Mono / .NET
+*.dll
+*.exe
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# --- Build outputs / packages ---
+*.apk
+*.aab
+*.xcodeproj
+*.xcworkspace
+*.app
+*.ipa
+*.unitypackage
+
+# --- Temporary / backup ---
+*.tmp
+*.temp
+*.bak
+*.old
+*.orig
+*.swp
+
+# --- OS generated files ---
+.DS_Store
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# --- Asset pipeline / caches ---
+sysinfo.txt
+memorycaptured.*
+
+# --- Prevent accidental checkin of large or binary assets — use Git LFS instead ---
+# Add a .gitattributes file to map large binary types to LFS (e.g., *.png filter=lfs diff=lfs merge=lfs -text)
+# Example: create .gitattributes with:
+# *.psd filter=lfs diff=lfs merge=lfs -text
+# *.wav filter=lfs diff=lfs merge=lfs -text
+
+# --- Optional: ignore JetBrains Rider caches ---
+/.idea/
+/.idea/*
+
+# --- Scenes auto-save snapshots ---
+*.unity~*
+
+# --- Keep ProjectSettings in source control (recommended) ---
+# ProjectSettings/ should usually be committed so team members share project-wide settings.
+# If you want to ignore user/editor-specific files, add them explicitly here (not the whole folder).
+# Example to ignore EditorUserSettings (per-user):
+ProjectSettings/EditorUserSettings.asset
+
+# --- Keep Assets and Packages tracked ---
+# Important: Do NOT ignore Assets/ or Packages/ or ProjectSettings/ (except user files above).
+
+# End of .gitignore
