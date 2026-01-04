@@ -15,7 +15,7 @@ public class Unit : MonoBehaviour
     private float nextAttackTime;
     private bool isStopped = false;
 
-    void Update()
+    protected virtual void Update()
     {
         if (hp <= 0) return;
 
@@ -80,7 +80,7 @@ public class Unit : MonoBehaviour
         }
     }
 
-    public void TakeDamage(float amount)
+    public virtual void TakeDamage(float amount)
     {
         hp -= amount;
         if (hp <= 0)
