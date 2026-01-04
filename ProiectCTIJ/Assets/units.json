@@ -1,0 +1,35 @@
+[
+  {
+    "id": "soldier",
+    "name": "Soldat",
+    "cost": 25,
+    "hp": 90,
+    "damage": 10,
+    "attackRate": 1.0,
+    "speed": 60,
+    "range": 40,
+    "description": "Ieftin, frontline"
+  },
+  {
+    "id": "tank",
+    "name": "Tanc",
+    "cost": 60,
+    "hp": 240,
+    "damage": 16,
+    "attackRate": 1.2,
+    "speed": 45,
+    "range": 40,
+    "description": "Tank, rezistent"
+  },
+  {
+    "id": "archer",
+    "name": "Arcaș",
+    "cost": 45,
+    "hp": 70,
+    "damage": 8,
+    "attackRate": 0.8,
+    "speed": 60,
+    "range": 200,
+    "description": "DPS la distanță"
+  }
+]

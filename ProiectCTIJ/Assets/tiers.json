@@ -1,0 +1,22 @@
+[
+  {
+    "tier": 1,
+    "xpRequired": 0,
+    "goldPerSec": 3.0
+  },
+  {
+    "tier": 2,
+    "xpRequired": 50,
+    "goldPerSec": 3.25
+  },
+  {
+    "tier": 3,
+    "xpRequired": 125,
+    "goldPerSec": 3.5
+  },
+  {
+    "tier": 4,
+    "xpRequired": 250,
+    "goldPerSec": 3.75
+  }
+]
