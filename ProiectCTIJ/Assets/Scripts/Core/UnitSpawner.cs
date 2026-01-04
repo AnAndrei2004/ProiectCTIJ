@@ -9,6 +9,10 @@ public class UnitSpawner : MonoBehaviour
     public Transform playerSpawnPoint;
     public Transform enemySpawnPoint;
 
+    [Header("Spawn Settings")]
+    public float spawnCooldown = 0.5f; // Cooldown între spawnuri
+    private float lastSpawnTime = -999f;
+
     private List<UnitData> unitDataList = new List<UnitData>();
 
     private void Awake()
@@ -30,15 +34,24 @@ public class UnitSpawner : MonoBehaviour
         else
         {
             // Fallback hardcoded for MVP if JSON fails
-            unitDataList.Add(new UnitData { id = "soldier", cost = 25, hp = 90, damage = 10, attackRate = 1f, speed = 60, range = 40 });
-            unitDataList.Add(new UnitData { id = "tank", cost = 60, hp = 240, damage = 16, attackRate = 1.2f, speed = 45, range = 40 });
-            unitDataList.Add(new UnitData { id = "archer", cost = 45, hp = 70, damage = 8, attackRate = 0.8f, speed = 60, range = 200 });
+            // Speed: unități Unity pe secundă (2-3 e normal pentru un joc 2D)
+            // Range: distanța de atac în unități Unity (1-3 pentru melee, 5+ pentru ranged)
+            unitDataList.Add(new UnitData { id = "soldier", cost = 25, hp = 90, damage = 10, attackRate = 1f, speed = 2f, range = 1.5f });
+            unitDataList.Add(new UnitData { id = "tank", cost = 60, hp = 240, damage = 16, attackRate = 1.2f, speed = 1.5f, range = 1.5f });
+            unitDataList.Add(new UnitData { id = "archer", cost = 45, hp = 70, damage = 8, attackRate = 0.8f, speed = 2f, range = 5f });
         }
     }
 
     public void SpawnUnit(int unitIndex, Team team)
     {
         if (unitIndex < 0 || unitIndex >= unitDataList.Count) return;
+
+        // Verifică cooldown pentru player
+        if (team == Team.Player && Time.time - lastSpawnTime < spawnCooldown)
+        {
+            Debug.Log("Spawn în cooldown!");
+            return;
+        }
 
         UnitData data = unitDataList[unitIndex];
 
@@ -48,6 +61,7 @@ public class UnitSpawner : MonoBehaviour
             {
                 GameManager.Instance.UpdateGold(-data.cost);
                 CreateUnitInstance(data, team, playerSpawnPoint.position);
+                lastSpawnTime = Time.time;
             }
         }
         else
@@ -58,7 +72,8 @@ public class UnitSpawner : MonoBehaviour
 
     private void CreateUnitInstance(UnitData data, Team team, Vector3 position)
     {
-        GameObject go = Instantiate(unitPrefab, position, Quaternion.identity);
+        Vector3 spawnPos = new Vector3(position.x, -2.44f, position.z);
+        GameObject go = Instantiate(unitPrefab, spawnPos, Quaternion.identity);
         Unit unit = go.GetComponent<Unit>();
         unit.Initialize(data, team);
     }

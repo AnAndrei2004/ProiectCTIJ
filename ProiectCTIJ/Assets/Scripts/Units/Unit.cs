@@ -14,12 +14,13 @@ public class Unit : MonoBehaviour
 
     private float nextAttackTime;
     private bool isStopped = false;
+    private Unit currentTarget;
 
     protected virtual void Update()
     {
         if (hp <= 0) return;
 
-        // 1. Detectare inamici în față
+        // 1. Detectare inamici în apropiere
         DetectEnemy();
 
         // 2. Mișcare (dacă nu este oprit de un inamic)
@@ -43,40 +44,44 @@ public class Unit : MonoBehaviour
 
     void DetectEnemy()
     {
-        // Tragem o rază invizibilă în față pentru a vedea dacă e cineva
-        float direction = (team == Team.Player) ? 1f : -1f;
-        RaycastHit2D hit = Physics2D.Raycast(transform.position, Vector2.right * direction, attackRange);
+        // Folosim OverlapCircle pentru a detecta toți inamicii în raza de atac
+        Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, attackRange);
+        
+        currentTarget = null;
+        float closestDistance = float.MaxValue;
 
-        if (hit.collider != null)
+        foreach (Collider2D hit in hits)
         {
-            Unit targetUnit = hit.collider.GetComponent<Unit>();
-            if (targetUnit != null && targetUnit.team != this.team)
+            if (hit.gameObject == this.gameObject) continue; // Ignoră propria unitate
+            
+            Unit targetUnit = hit.GetComponent<Unit>();
+            if (targetUnit != null && targetUnit.team != this.team && targetUnit.hp > 0)
             {
-                isStopped = true;
-                return;
+                float distance = Vector2.Distance(transform.position, targetUnit.transform.position);
+                if (distance < closestDistance)
+                {
+                    closestDistance = distance;
+                    currentTarget = targetUnit;
+                }
             }
         }
-        isStopped = false;
+
+        isStopped = (currentTarget != null);
     }
 
     void Attack()
     {
+        if (currentTarget == null || currentTarget.hp <= 0)
+        {
+            isStopped = false;
+            return;
+        }
+
         if (Time.time >= nextAttackTime)
         {
-            // Căutăm din nou ținta pentru a-i da damage
-            float direction = (team == Team.Player) ? 1f : -1f;
-            RaycastHit2D hit = Physics2D.Raycast(transform.position, Vector2.right * direction, attackRange);
-
-            if (hit.collider != null)
-            {
-                Unit targetUnit = hit.collider.GetComponent<Unit>();
-                if (targetUnit != null && targetUnit.team != this.team)
-                {
-                    targetUnit.TakeDamage(damage);
-                    nextAttackTime = Time.time + attackRate;
-                    Debug.Log(gameObject.name + " a atacat pe " + targetUnit.gameObject.name);
-                }
-            }
+            currentTarget.TakeDamage(damage);
+            nextAttackTime = Time.time + attackRate;
+            Debug.Log(gameObject.name + " a atacat pe " + currentTarget.gameObject.name);
         }
     }
 
