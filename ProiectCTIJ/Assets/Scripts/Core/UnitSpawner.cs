@@ -1,80 +1,150 @@
 using UnityEngine;
-using System.Collections.Generic;
 
 public class UnitSpawner : MonoBehaviour
 {
     public static UnitSpawner Instance { get; private set; }
 
-    public GameObject unitPrefab; // Generic prefab that gets initialized with UnitData
+    [Header("Player Prefabs")]
+    public GameObject[] playerPrefabs; // Trage aici cele 3 prefab-uri pentru Player
+
+    [Header("Enemy Prefabs")]
+    public GameObject[] enemyPrefabs;  // Trage aici cele 3 prefab-uri pentru Enemy
+
+    [Header("Spawn Points")]
     public Transform playerSpawnPoint;
     public Transform enemySpawnPoint;
 
     [Header("Spawn Settings")]
-    public float spawnCooldown = 0.5f; // Cooldown între spawnuri
+    public float spawnCooldown = 0.5f;
     private float lastSpawnTime = -999f;
 
-    private List<UnitData> unitDataList = new List<UnitData>();
+    [Header("Enemy AI Settings")]
+    public float enemySpawnInterval = 3f;
+    private float nextEnemySpawnTime = 2f;
 
     private void Awake()
     {
         Instance = this;
-        LoadUnitData();
     }
 
-    private void LoadUnitData()
+    private void Update()
     {
-        TextAsset jsonFile = Resources.Load<TextAsset>("units");
-        if (jsonFile != null)
+        // AI simplu pentru spawn inamici
+        if (Time.time >= nextEnemySpawnTime && GameManager.Instance != null && !GameManager.Instance.isGameOver)
         {
-            // Note: Simple JSON parsing might need a wrapper or a library like Newtonsoft
-            // For MVP, we'll assume we can manually populate or use a simple wrapper
-            // UnitDataList data = JsonUtility.FromJson<UnitDataList>(jsonFile.text);
-            // unitDataList.AddRange(data.units);
-        }
-        else
-        {
-            // Fallback hardcoded for MVP if JSON fails
-            // Speed: unități Unity pe secundă (2-3 e normal pentru un joc 2D)
-            // Range: distanța de atac în unități Unity (1-3 pentru melee, 5+ pentru ranged)
-            unitDataList.Add(new UnitData { id = "soldier", cost = 25, hp = 90, damage = 10, attackRate = 1f, speed = 2f, range = 1.5f });
-            unitDataList.Add(new UnitData { id = "tank", cost = 60, hp = 240, damage = 16, attackRate = 1.2f, speed = 1.5f, range = 1.5f });
-            unitDataList.Add(new UnitData { id = "archer", cost = 45, hp = 70, damage = 8, attackRate = 0.8f, speed = 2f, range = 5f });
+            SpawnRandomEnemyUnit();
+            nextEnemySpawnTime = Time.time + enemySpawnInterval;
         }
     }
 
-    public void SpawnUnit(int unitIndex, Team team)
+    /// <summary>
+    /// Spawn o unitate player (0, 1 sau 2)
+    /// </summary>
+    public void SpawnPlayerUnit(int unitIndex)
     {
-        if (unitIndex < 0 || unitIndex >= unitDataList.Count) return;
+        if (unitIndex < 0 || unitIndex >= playerPrefabs.Length)
+        {
+            Debug.LogWarning($"Index invalid pentru player unit: {unitIndex}");
+            return;
+        }
 
-        // Verifică cooldown pentru player
-        if (team == Team.Player && Time.time - lastSpawnTime < spawnCooldown)
+        // Verifică cooldown
+        if (Time.time - lastSpawnTime < spawnCooldown)
         {
             Debug.Log("Spawn în cooldown!");
             return;
         }
 
-        UnitData data = unitDataList[unitIndex];
+        GameObject prefab = playerPrefabs[unitIndex];
+        Unit unitScript = prefab.GetComponent<Unit>();
 
-        if (team == Team.Player)
+        if (unitScript != null)
         {
-            if (GameManager.Instance.currentGold >= data.cost)
+            int cost = unitScript.cost;
+            
+            if (GameManager.Instance.currentGold >= cost)
             {
-                GameManager.Instance.UpdateGold(-data.cost);
-                CreateUnitInstance(data, team, playerSpawnPoint.position);
+                GameManager.Instance.UpdateGold(-cost);
+                CreateUnitInstance(prefab, Team.Player);
                 lastSpawnTime = Time.time;
+                Debug.Log($"Spawned {unitScript.unitName} (Cost: {cost})");
+            }
+            else
+            {
+                Debug.Log($"Nu ai suficient aur! Ai nevoie de {cost}, ai {GameManager.Instance.currentGold}");
             }
         }
         else
         {
-            CreateUnitInstance(data, team, enemySpawnPoint.position);
+            Debug.LogError($"Prefab-ul {prefab.name} nu are scriptul Unit atașat!");
         }
     }
 
-    private void CreateUnitInstance(UnitData data, Team team, Vector3 position)
+    /// <summary>
+    /// Spawn o unitate inamică (0, 1 sau 2)
+    /// </summary>
+    public void SpawnEnemyUnit(int unitIndex)
     {
-        Vector3 spawnPos = new Vector3(position.x, -2.44f, position.z);
-        GameObject go = Instantiate(unitPrefab, spawnPos, Quaternion.identity);
+        if (unitIndex < 0 || unitIndex >= enemyPrefabs.Length) return;
+        
+        CreateUnitInstance(enemyPrefabs[unitIndex], Team.Enemy);
+    }
+
+    /// <summary>
+    /// Spawn o unitate inamică aleatorie (pentru AI)
+    /// </summary>
+    public void SpawnRandomEnemyUnit()
+    {
+        if (enemyPrefabs.Length == 0) return;
+        int randomIndex = Random.Range(0, enemyPrefabs.Length);
+        SpawnEnemyUnit(randomIndex);
+    }
+
+    private void CreateUnitInstance(GameObject prefab, Team team)
+    {
+        // Determină poziția de spawn în funcție de echipă
+        Transform spawnPoint = (team == Team.Player) ? playerSpawnPoint : enemySpawnPoint;
+        Vector3 spawnPos = new Vector3(spawnPoint.position.x, -4f, spawnPoint.position.z);
+        
+        GameObject go = Instantiate(prefab, spawnPos, Quaternion.identity);
         Unit unit = go.GetComponent<Unit>();
-        unit.Initialize(data, team);
+        
+        if (unit != null)
+        {
+            unit.SetTeam(team); // Setează echipa și orientarea
+            go.name = $"{unit.unitName} ({team})";
+        }
+    }
+
+    /// <summary>
+    /// Metodă de compatibilitate pentru scripturile vechi
+    /// </summary>
+    public void SpawnUnit(int unitIndex, Team team)
+    {
+        if (team == Team.Player)
+            SpawnPlayerUnit(unitIndex);
+        else
+            SpawnEnemyUnit(unitIndex);
+    }
+
+    // Metode utile pentru UI
+    public int GetPlayerUnitCost(int index)
+    {
+        if (index >= 0 && index < playerPrefabs.Length)
+        {
+            Unit u = playerPrefabs[index].GetComponent<Unit>();
+            return (u != null) ? u.cost : 0;
+        }
+        return 0;
+    }
+
+    public string GetPlayerUnitName(int index)
+    {
+        if (index >= 0 && index < playerPrefabs.Length)
+        {
+            Unit u = playerPrefabs[index].GetComponent<Unit>();
+            return (u != null) ? u.unitName : "Unknown";
+        }
+        return "Unknown";
     }
 }

@@ -5,12 +5,16 @@ public class BaseUnit : Unit
     [Header("Base Settings")]
     public bool isPlayerBase;
 
-    public override void Initialize(UnitData unitData, Team unitTeam)
+    protected override void Start()
     {
-        // Bazele au de obicei statistici fixe, nu neapărat din JSON-ul de unități
-        this.team = unitTeam;
-        this.hp = 2000f; // HP-ul bazei conform pitch-ului
-        this.attackRange = 0f; // Baza în sine nu atacă (sau are turret separat)
+        // Bazele au HP fix, nu folosim valorile din Unit
+        hp = 2000f;
+        attackRange = 0f;
+        damage = 0f;
+        speed = 0f;
+        
+        // Setăm echipa în funcție de tipul bazei
+        team = isPlayerBase ? Team.Player : Team.Enemy;
     }
 
     protected override void Update()
@@ -20,9 +24,6 @@ public class BaseUnit : Unit
         // Bazele nu se mișcă și nu caută ținte ca unitățile mobile
         // Doar verificăm dacă a murit
     }
-
-    // Suprascriem Move ca să fim siguri că baza nu pleacă de pe loc
-    void Move() { }
 
     public override void TakeDamage(float amount)
     {
