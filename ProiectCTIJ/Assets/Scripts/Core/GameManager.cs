@@ -47,6 +47,19 @@ public class GameManager : MonoBehaviour
         OnGoldChanged?.Invoke();
     }
 
+    /// <summary>
+    /// Adaugă recompensă pentru uciderea unui inamic
+    /// </summary>
+    public void AddKillReward(int reward)
+    {
+        currentGold += reward;
+        Debug.Log($"+{reward} aur pentru uciderea inamicului! Total: {currentGold}");
+        OnGoldChanged?.Invoke();
+        
+        // Opțional: adaugă și XP
+        UpdateXP(reward * 0.5f);
+    }
+
     public void UpdateXP(float amount)
     {
         currentXP += amount;

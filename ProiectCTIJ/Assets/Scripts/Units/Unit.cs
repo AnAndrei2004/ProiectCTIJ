@@ -4,17 +4,29 @@ public enum Team { Player, Enemy }
 
 public class Unit : MonoBehaviour
 {
-    [Header("Settings")]
+    [Header("Unit Settings")]
     public Team team;
-    public float speed = 2f;
+    
+    [Header("Stats")]
+    public string unitName = "Unit";
+    public int cost = 25;
+    public int killReward = 15;
     public float hp = 100f;
     public float damage = 10f;
-    public float attackRange = 1f;
+    public float speed = 2f;
+    public float attackRange = 1.5f;
     public float attackRate = 1f;
 
+    [Header("Runtime")]
+    private float currentHP;
     private float nextAttackTime;
     private bool isStopped = false;
     private Unit currentTarget;
+
+    protected virtual void Start()
+    {
+        currentHP = hp; // Inițializează HP-ul curent
+    }
 
     protected virtual void Update()
     {
@@ -37,7 +49,8 @@ public class Unit : MonoBehaviour
 
     void Move()
     {
-        // Jucătorul merge la dreapta (X pozitiv), Inamicul la stânga (X negativ)
+        // Player (în stânga) merge spre dreapta (X pozitiv)
+        // Enemy (în dreapta) merge spre stânga (X negativ)
         float direction = (team == Team.Player) ? 1f : -1f;
         transform.Translate(Vector2.right * direction * speed * Time.deltaTime);
     }
@@ -94,23 +107,38 @@ public class Unit : MonoBehaviour
         }
     }
 
-    public virtual void Initialize(UnitData unitData, Team unitTeam)
+    public virtual void SetTeam(Team newTeam)
     {
-        // Această metodă va fi folosită de Spawner pentru a seta statisticile din JSON
-        team = unitTeam;
-        if (unitData != null)
+        team = newTeam;
+        
+        // Schimbă direcția vizuală (Facing)
+        // Player (în stânga) trebuie să privească spre DREAPTA -> Scale X NEGATIV
+        // Enemy (în dreapta) trebuie să privească spre STÂNGA -> Scale X POZITIV
+        
+        float absScale = Mathf.Abs(transform.localScale.x);
+        
+        if (team == Team.Player)
         {
-            hp = unitData.hp;
-            damage = unitData.damage;
-            speed = unitData.speed;
-            attackRange = unitData.range;
-            attackRate = unitData.attackRate;
+            // Player privește spre dreapta (scale X negativ pentru a întoarce sprite-ul)
+            transform.localScale = new Vector3(-absScale, transform.localScale.y, transform.localScale.z);
+        }
+        else // Enemy
+        {
+            // Enemy privește spre stânga (scale X pozitiv)
+            transform.localScale = new Vector3(absScale, transform.localScale.y, transform.localScale.z);
         }
     }
 
     void Die()
     {
         Debug.Log(gameObject.name + " a murit.");
+        
+        // Dacă unitatea ucisă este inamic, jucătorul primește recompensă
+        if (team == Team.Enemy && GameManager.Instance != null)
+        {
+            GameManager.Instance.AddKillReward(killReward);
+        }
+        
         Destroy(gameObject);
     }
 }
