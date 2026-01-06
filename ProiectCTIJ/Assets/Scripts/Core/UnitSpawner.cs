@@ -19,8 +19,10 @@ public class UnitSpawner : MonoBehaviour
     private float lastSpawnTime = -999f;
 
     [Header("Enemy AI Settings")]
-    public float enemySpawnInterval = 3f;
+    public float enemySpawnInterval = 6f;
     private float nextEnemySpawnTime = 2f;
+
+    private int enemySpawnStep = 0;
 
     private void Awake()
     {
@@ -32,8 +34,11 @@ public class UnitSpawner : MonoBehaviour
         // AI simplu pentru spawn inamici
         if (Time.time >= nextEnemySpawnTime && GameManager.Instance != null && !GameManager.Instance.isGameOver)
         {
-            SpawnRandomEnemyUnit();
-            nextEnemySpawnTime = Time.time + enemySpawnInterval;
+            SpawnStrategicEnemyUnit();
+
+            // Slow, slightly randomized pacing (more room for strategy)
+            float interval = Mathf.Max(enemySpawnInterval, 5f);
+            nextEnemySpawnTime = Time.time + Random.Range(interval * 0.9f, interval * 1.25f);
         }
     }
 
@@ -56,27 +61,18 @@ public class UnitSpawner : MonoBehaviour
         }
 
         GameObject prefab = playerPrefabs[unitIndex];
-        Unit unitScript = prefab.GetComponent<Unit>();
+        int cost = GetCostForPrefab(prefab);
 
-        if (unitScript != null)
+        if (GameManager.Instance.currentGold >= cost)
         {
-            int cost = unitScript.cost;
-            
-            if (GameManager.Instance.currentGold >= cost)
-            {
-                GameManager.Instance.UpdateGold(-cost);
-                CreateUnitInstance(prefab, Team.Player);
-                lastSpawnTime = Time.time;
-                Debug.Log($"Spawned {unitScript.unitName} (Cost: {cost})");
-            }
-            else
-            {
-                Debug.Log($"Nu ai suficient aur! Ai nevoie de {cost}, ai {GameManager.Instance.currentGold}");
-            }
+            GameManager.Instance.UpdateGold(-cost);
+            CreateUnitInstance(prefab, Team.Player);
+            lastSpawnTime = Time.time;
+            Debug.Log($"Spawned {prefab.name} (Cost: {cost})");
         }
         else
         {
-            Debug.LogError($"Prefab-ul {prefab.name} nu are scriptul Unit atașat!");
+            Debug.Log($"Nu ai suficient aur! Ai nevoie de {cost}, ai {GameManager.Instance.currentGold}");
         }
     }
 
@@ -100,6 +96,66 @@ public class UnitSpawner : MonoBehaviour
         SpawnEnemyUnit(randomIndex);
     }
 
+    private void SpawnStrategicEnemyUnit()
+    {
+        if (enemyPrefabs == null || enemyPrefabs.Length == 0) return;
+
+        // Simple wave pattern: Heavy -> Ranged -> Light -> Light (repeat)
+        EnemyRole desiredRole;
+        switch (enemySpawnStep % 4)
+        {
+            case 0:
+                desiredRole = EnemyRole.Heavy;
+                break;
+            case 1:
+                desiredRole = EnemyRole.Ranged;
+                break;
+            default:
+                desiredRole = EnemyRole.Light;
+                break;
+        }
+
+        int index = FindEnemyPrefabIndex(desiredRole);
+        if (index < 0)
+        {
+            // Fallback: random if role not present in enemyPrefabs array.
+            index = Random.Range(0, enemyPrefabs.Length);
+        }
+
+        SpawnEnemyUnit(index);
+        enemySpawnStep++;
+    }
+
+    private enum EnemyRole { Heavy, Light, Ranged }
+
+    private int FindEnemyPrefabIndex(EnemyRole role)
+    {
+        for (int i = 0; i < enemyPrefabs.Length; i++)
+        {
+            GameObject prefab = enemyPrefabs[i];
+            if (prefab == null) continue;
+
+            string name = prefab.name;
+            if (role == EnemyRole.Heavy)
+            {
+                if (name.Contains("Soldier") || name.Contains("Knight") || name.Contains("Merchant"))
+                    return i;
+            }
+            else if (role == EnemyRole.Light)
+            {
+                if (name.Contains("Thief") || name.Contains("Peasant"))
+                    return i;
+            }
+            else if (role == EnemyRole.Ranged)
+            {
+                if (name.Contains("Priest"))
+                    return i;
+            }
+        }
+
+        return -1;
+    }
+
     private void CreateUnitInstance(GameObject prefab, Team team)
     {
         // Determină poziția de spawn în funcție de echipă
@@ -112,7 +168,10 @@ public class UnitSpawner : MonoBehaviour
         if (unit != null)
         {
             unit.SetTeam(team); // Setează echipa și orientarea
-            go.name = $"{unit.unitName} ({team})";
+
+            // Preserve prefab identity for presets/UI/logs.
+            unit.unitName = prefab.name;
+            go.name = $"{prefab.name} ({team})";
         }
     }
 
@@ -132,8 +191,7 @@ public class UnitSpawner : MonoBehaviour
     {
         if (index >= 0 && index < playerPrefabs.Length)
         {
-            Unit u = playerPrefabs[index].GetComponent<Unit>();
-            return (u != null) ? u.cost : 0;
+            return GetCostForPrefab(playerPrefabs[index]);
         }
         return 0;
     }
@@ -142,9 +200,29 @@ public class UnitSpawner : MonoBehaviour
     {
         if (index >= 0 && index < playerPrefabs.Length)
         {
-            Unit u = playerPrefabs[index].GetComponent<Unit>();
-            return (u != null) ? u.unitName : "Unknown";
+            return playerPrefabs[index] != null ? playerPrefabs[index].name : "Unknown";
         }
         return "Unknown";
+    }
+
+    private int GetCostForPrefab(GameObject prefab)
+    {
+        if (prefab == null) return 0;
+        string name = prefab.name;
+
+        // Heavy
+        if (name.Contains("Soldier") || name.Contains("Knight") || name.Contains("Merchant"))
+            return 35;
+
+        // Light
+        if (name.Contains("Thief") || name.Contains("Peasant"))
+            return 20;
+
+        // Ranged
+        if (name.Contains("Priest"))
+            return 30;
+
+        // Fallback
+        return 25;
     }
 }
