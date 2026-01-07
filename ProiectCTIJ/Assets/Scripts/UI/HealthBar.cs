@@ -23,6 +23,8 @@ public class HealthBar : MonoBehaviour
     private Unit targetUnit;
     private Transform targetTransform;
     private Camera mainCamera;
+    private float maxHP;  // HP maxim salvat când se setează ținta
+    private bool maxHPInitialized = false;
     
     void Start()
     {
@@ -38,7 +40,7 @@ public class HealthBar : MonoBehaviour
             }
         }
         
-        UpdateBar();
+        // NU setăm maxHP aici - așteptăm primul Update când currentHP e deja setat corect
     }
     
     void LateUpdate()
@@ -65,9 +67,22 @@ public class HealthBar : MonoBehaviour
     {
         if (targetUnit == null || fillImage == null) return;
         
-        float healthPercent = Mathf.Clamp01(targetUnit.currentHP / targetUnit.hp);
+        // Inițializează maxHP o singură dată, când currentHP e deja setat (după ApplyRolePreset)
+        if (!maxHPInitialized && targetUnit.currentHP > 0)
+        {
+            maxHP = targetUnit.currentHP;  // La start, currentHP == maxHP
+            maxHPInitialized = true;
+            fillImage.fillAmount = 1f;  // Forțează bara plină
+            return;
+        }
         
-        // Actualizează fill amount
+        if (maxHP <= 0) return;  // Încă nu e inițializat
+        
+        // Calculează procentul corect
+        float currentHealth = Mathf.Max(0f, targetUnit.currentHP);
+        float healthPercent = Mathf.Clamp01(currentHealth / maxHP);
+        
+        // Actualizează fill amount DIRECT (fără smooth pentru precizie)
         fillImage.fillAmount = healthPercent;
         
         // Schimbă culoarea în funcție de HP
@@ -103,6 +118,7 @@ public class HealthBar : MonoBehaviour
     public void SetTarget(Unit unit)
     {
         targetUnit = unit;
+        maxHPInitialized = false;  // Reset pentru a lua maxHP corect la primul Update
         if (unit != null)
         {
             targetTransform = unit.transform;

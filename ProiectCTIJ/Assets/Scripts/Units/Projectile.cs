@@ -1,126 +1,107 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class Projectile : MonoBehaviour
 {
-    public float speed = 10f;
-    public int damage = 10;
-    public Team team;
-    [Tooltip("Rotire suplimentară pentru sprite; folosește -90 dacă sprite-ul este orientat în sus și vrei să fie orientat spre dreapta.")]
-    public float rotationOffsetDeg = -90f;
-    [Header("Arc Settings")]
-    [Tooltip("Dacă e true, folosește o traiectorie balistică (arc) cu gravitație simulată manual.")]
-    public bool useBallisticArc = true;
-    [Tooltip("Accelerație gravitațională aplicată pe Y când useBallisticArc este true (negativă pentru a cădea).")]
-    public float arcGravity = -18f;
-    [Tooltip("Impuls vertical inițial pentru arc; ridică săgeata în sus la start.")]
-    public float arcLift = 4f;
+    [Header("Movement")]
+    public float speed = 12f;
     
+    [Header("Visual")]
+    public float rotationOffsetDeg = -90f;
+    
+    private int damage;
+    private Team team;
     private Unit target;
     private Vector3 direction;
-    private bool loggedZeroDirection;
-    private Vector3 velocity; // folosit când useBallisticArc este true
-
-    void Awake()
-    {
-        // Safety: neutralize gravity before Initialize in case something instanțiază fără să apeleze imediat Initialize.
-        Rigidbody2D rb = GetComponent<Rigidbody2D>();
-        if (rb != null)
-        {
-            rb.gravityScale = 0f;
-            rb.bodyType = RigidbodyType2D.Kinematic;
-            rb.simulated = true;
-        }
-    }
+    private Vector3 spawnPosition;
+    private bool initialized;
+    private bool hasHit;
     
     public void Initialize(Unit targetUnit, int projectileDamage, Team sourceTeam)
     {
+        initialized = true;
+        hasHit = false;
+        
         target = targetUnit;
         damage = projectileDamage;
         team = sourceTeam;
-
-        // Neutralize gravity and force kinematic to avoid physics drag/arc.
-        Rigidbody2D rb = GetComponent<Rigidbody2D>();
-        if (rb != null)
-        {
-            rb.gravityScale = 0f;
-            rb.bodyType = RigidbodyType2D.Kinematic;
-            rb.simulated = true;
-        }
+        spawnPosition = transform.position;
         
-        if (target != null && target.currentHP > 0)
-        {
-            direction = (target.transform.position - transform.position).normalized;
-        }
-        else
-        {
-            // Fallback: shoot forward even dacă ținta moare exact la spawn
-            direction = (team == Team.Player) ? Vector3.right : Vector3.left;
-        }
-
-        if (useBallisticArc)
-        {
-            // Setează viteză inițială și impuls vertical pentru arc.
-            velocity = direction * speed;
-            velocity.y += arcLift;
-        }
-
-        // Orientează sprite-ul pe direcția de zbor (2D: în jurul axei Z)
-        float angleDeg = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg + rotationOffsetDeg;
-        transform.rotation = Quaternion.AngleAxis(angleDeg, Vector3.forward);
-
-        Collider2D col = GetComponent<Collider2D>();
-        string colInfo = (col == null) ? "no collider" : $"collider isTrigger={col.isTrigger} layer={LayerMask.LayerToName(gameObject.layer)}";
-        string rbInfo = (rb == null) ? "no rigidbody" : $"rb bodyType={rb.bodyType} sim={rb.simulated} kinematic={rb.isKinematic} g={rb.gravityScale}";
-
-        Debug.Log($"Projectile spawn | team={team} dmg={damage} dir={direction} target={(target != null ? target.gameObject.name : "none")} | {colInfo} | {rbInfo}");
+        // Zboară ORIZONTAL - doar pe X, fără să intre în pământ
+        direction = (team == Team.Player) ? Vector3.right : Vector3.left;
         
-        // Distruge după 3 secunde dacă nu lovește nimic
-        Destroy(gameObject, 3f);
+        // Rotația e fixă - orizontală
+        float angle = (team == Team.Player) ? 0f : 180f;
+        transform.rotation = Quaternion.Euler(0, 0, angle + rotationOffsetDeg);
+        CancelInvoke();
+        Destroy(gameObject, 4f);
+        
+        Debug.Log("[Arrow] Fired at " + (target != null ? target.gameObject.name : "none"));
     }
     
     void Update()
     {
-        if (useBallisticArc)
+        if (!initialized || hasHit) return;
+        
+        // Zboară doar orizontal - nu urmărește ținta pe Y
+        transform.position += direction * speed * Time.deltaTime;
+        
+        float traveled = Vector3.Distance(transform.position, spawnPosition);
+        if (traveled > 0.25f)
         {
-            // Traiectorie balistică: nu mai actualizăm direcția spre țintă după lansare.
-            velocity.y += arcGravity * Time.deltaTime;
-            transform.position += velocity * Time.deltaTime;
-
-            float angleDeg = Mathf.Atan2(velocity.y, velocity.x) * Mathf.Rad2Deg + rotationOffsetDeg;
-            transform.rotation = Quaternion.AngleAxis(angleDeg, Vector3.forward);
+            CheckHit();
         }
-        else
+    }
+    
+    // Rotația e setată o singură dată în Initialize()
+    
+    void CheckHit()
+    {
+        if (hasHit) return;
+        
+        // Verifică coliziune cu ORICE inamic în cale - rază mare pe Y pentru că zboară orizontal
+        Collider2D[] cols = Physics2D.OverlapCircleAll(transform.position, 0.6f);
+        if (cols != null)
         {
-            if (target != null && target.currentHP > 0)
+            foreach (Collider2D col in cols)
             {
-                // Actualizează direcția spre țintă (homing ușor)
-                direction = (target.transform.position - transform.position).normalized;
+                if (col == null) continue;
+                
+                Unit unit = col.GetComponentInParent<Unit>();
+                if (unit != null && unit.team != team && unit.currentHP > 0)
+                {
+                    // Verifică că suntem aproape pe X (săgeata zboară orizontal)
+                    float deltaX = Mathf.Abs(transform.position.x - unit.transform.position.x);
+                    if (deltaX < 0.5f)
+                    {
+                        ApplyHit(unit);
+                        return;
+                    }
+                }
             }
-
-            // Mișcă proiectilul
-            transform.position += direction * speed * Time.deltaTime;
-
-            // Actualizează și rotația pe traiectorie
-            float angleDeg = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg + rotationOffsetDeg;
-            transform.rotation = Quaternion.AngleAxis(angleDeg, Vector3.forward);
         }
-
-        if (!loggedZeroDirection && direction.sqrMagnitude < 0.0001f)
-        {
-            loggedZeroDirection = true;
-            Debug.Log($"Projectile stalled | team={team} target={(target != null ? target.gameObject.name : "none")} pos={transform.position}");
-        }
+    }
+    
+    void ApplyHit(Unit unit)
+    {
+        if (hasHit || unit == null) return;
+        
+        hasHit = true;
+        Debug.Log("[Arrow] Hit " + unit.gameObject.name + " for " + damage);
+        unit.TakeDamage(damage);
+        Destroy(gameObject);
     }
     
     void OnTriggerEnter2D(Collider2D collision)
     {
-        Unit hitUnit = collision.GetComponent<Unit>();
+        if (!initialized || hasHit) return;
         
-        if (hitUnit != null && hitUnit.team != team && hitUnit.currentHP > 0)
+        float traveled = Vector3.Distance(transform.position, spawnPosition);
+        if (traveled < 0.25f) return;
+        
+        Unit unit = collision.GetComponentInParent<Unit>();
+        if (unit != null && unit.team != team && unit.currentHP > 0)
         {
-            Debug.Log($"Projectile hit {hitUnit.gameObject.name} for {damage}");
-            hitUnit.TakeDamage(damage);
-            Destroy(gameObject); // Distruge proiectilul după impact
+            ApplyHit(unit);
         }
     }
 }

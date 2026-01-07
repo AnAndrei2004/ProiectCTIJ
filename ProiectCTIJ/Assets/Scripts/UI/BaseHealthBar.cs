@@ -22,7 +22,12 @@ public class BaseHealthBar : MonoBehaviour
     [Range(0f, 1f)] public float lowHealthThreshold = 0.3f;
     [Range(0f, 1f)] public float criticalHealthThreshold = 0.15f;
     
+    [Header("Which Base")]
+    [Tooltip("True = bara pentru baza Player, False = bara pentru baza Enemy")]
+    public bool isForPlayerBase = true;
+    
     private float lastHP;
+    private float maxHP;
     
     void Start()
     {
@@ -35,6 +40,8 @@ public class BaseHealthBar : MonoBehaviour
         if (targetBase != null)
         {
             lastHP = targetBase.currentHP;
+            maxHP = targetBase.hp;
+            if (maxHP <= 0) maxHP = 2000f;  // Default pentru baze
         }
         
         UpdateBar();
@@ -42,17 +49,17 @@ public class BaseHealthBar : MonoBehaviour
     
     void FindTargetBase()
     {
-        // Caută în părinte
-        targetBase = GetComponentInParent<BaseUnit>();
+        BaseUnit[] bases = FindObjectsByType<BaseUnit>(FindObjectsSortMode.None);
         
-        // Sau caută după tag/nume
-        if (targetBase == null)
+        foreach (var b in bases)
         {
-            BaseUnit[] bases = FindObjectsByType<BaseUnit>(FindObjectsSortMode.None);
-            foreach (var b in bases)
+            // Găsește baza corectă în funcție de isForPlayerBase
+            if (b.isPlayerBase == isForPlayerBase)
             {
-                // Poți personaliza logica aici pentru Player vs Enemy base
                 targetBase = b;
+                maxHP = b.hp;
+                if (maxHP <= 0) maxHP = 2000f;
+                Debug.Log($"[BaseHealthBar] {gameObject.name} -> {b.gameObject.name} (HP: {b.currentHP}/{maxHP})");
                 break;
             }
         }
@@ -60,10 +67,11 @@ public class BaseHealthBar : MonoBehaviour
     
     void Update()
     {
+        // Re-try finding base if not set
         if (targetBase == null)
         {
-            gameObject.SetActive(false);
-            return;
+            FindTargetBase();
+            if (targetBase == null) return;
         }
         
         UpdateBar();
@@ -73,9 +81,17 @@ public class BaseHealthBar : MonoBehaviour
     {
         if (targetBase == null || fillImage == null) return;
         
-        float healthPercent = Mathf.Clamp01(targetBase.currentHP / targetBase.hp);
+        // Asigură-te că maxHP e setat corect
+        if (maxHP <= 0)
+        {
+            maxHP = targetBase.hp;
+            if (maxHP <= 0) maxHP = 2000f;
+        }
         
-        // Smooth fill (opțional)
+        float currentHealth = Mathf.Max(0f, targetBase.currentHP);
+        float healthPercent = Mathf.Clamp01(currentHealth / maxHP);
+        
+        // Smooth fill
         fillImage.fillAmount = Mathf.Lerp(fillImage.fillAmount, healthPercent, Time.deltaTime * 8f);
         
         // Culoare în funcție de HP
@@ -99,7 +115,7 @@ public class BaseHealthBar : MonoBehaviour
         // Actualizează textul HP
         if (hpText != null)
         {
-            hpText.text = $"{Mathf.CeilToInt(targetBase.currentHP)} / {Mathf.CeilToInt(targetBase.hp)}";
+            hpText.text = $"{Mathf.CeilToInt(currentHealth)} / {Mathf.CeilToInt(maxHP)}";
         }
         
         lastHP = targetBase.currentHP;
