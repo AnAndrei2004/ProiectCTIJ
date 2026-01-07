@@ -15,6 +15,9 @@ public class Projectile : MonoBehaviour
     private Vector3 spawnPosition;
     private bool initialized;
     private bool hasHit;
+
+    private Vector3 lastPosition;
+    private readonly RaycastHit2D[] segmentHits = new RaycastHit2D[16];
     
     public void Initialize(Unit targetUnit, int projectileDamage, Team sourceTeam)
     {
@@ -25,6 +28,7 @@ public class Projectile : MonoBehaviour
         damage = projectileDamage;
         team = sourceTeam;
         spawnPosition = transform.position;
+        lastPosition = transform.position;
         
         // Zboară ORIZONTAL - doar pe X, fără să intre în pământ
         direction = (team == Team.Player) ? Vector3.right : Vector3.left;
@@ -41,13 +45,22 @@ public class Projectile : MonoBehaviour
     void Update()
     {
         if (!initialized || hasHit) return;
-        
+
         // Zboară doar orizontal - nu urmărește ținta pe Y
-        transform.position += direction * speed * Time.deltaTime;
+        Vector3 nextPosition = transform.position + direction * speed * Time.deltaTime;
+
+        // IMPORTANT: anti-tunneling. Projectile rapide pot trece prin collider fără OnTrigger.
+        // Verificăm segmentul parcurs în acest frame.
+        TryHitAlongSegment(transform.position, nextPosition);
+        if (hasHit) return;
+
+        transform.position = nextPosition;
+        lastPosition = nextPosition;
         
         float traveled = Vector3.Distance(transform.position, spawnPosition);
         if (traveled > 0.25f)
         {
+            // Fallback: overlap (pentru cazuri rare)
             CheckHit();
         }
     }
@@ -77,6 +90,32 @@ public class Projectile : MonoBehaviour
                         return;
                     }
                 }
+            }
+        }
+    }
+
+    private void TryHitAlongSegment(Vector3 from, Vector3 to)
+    {
+        if (hasHit) return;
+
+        ContactFilter2D filter = new ContactFilter2D();
+        filter.useLayerMask = true;
+        filter.layerMask = ~0;
+        filter.useTriggers = true; // include triggers indiferent de setările globale
+
+        int count = Physics2D.Linecast(from, to, filter, segmentHits);
+        if (count <= 0) return;
+
+        for (int i = 0; i < count; i++)
+        {
+            Collider2D col = segmentHits[i].collider;
+            if (col == null) continue;
+
+            Unit unit = col.GetComponentInParent<Unit>();
+            if (unit != null && unit.team != team && unit.currentHP > 0)
+            {
+                ApplyHit(unit);
+                return;
             }
         }
     }
