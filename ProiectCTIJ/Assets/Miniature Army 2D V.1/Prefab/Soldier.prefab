@@ -193,6 +193,7 @@ GameObject:
   - component: {fileID: 521548794322710736}
   - component: {fileID: 7907526139945142982}
   - component: {fileID: 280185359053347767}
+  - component: {fileID: -5839978082493212826}
   m_Layer: 0
   m_Name: Soldier
   m_TagString: Untagged
@@ -280,6 +281,7 @@ MonoBehaviour:
   team: 1
   isRanged: 0
   projectilePrefab: {fileID: 0}
+  projectileSpawnOffset: {x: 0.1, y: 0.45}
   unitName: Unit
   cost: 25
   killReward: 15
@@ -288,6 +290,12 @@ MonoBehaviour:
   speed: 2
   attackRange: 1.5
   attackRate: 1
+  idleAnimName: Idle
+  walkAnimName: Walk
+  attackAnimName: Attack
+  castAnimName: Cast
+  hurtAnimName: Hurt
+  dieAnimName: Die
   currentHP: 0
 --- !u!70 &280185359053347767
 CapsuleCollider2D:
@@ -326,6 +334,22 @@ CapsuleCollider2D:
   m_Offset: {x: 0, y: 0}
   m_Size: {x: 0.5, y: 1}
   m_Direction: 0
+--- !u!111 &-5839978082493212826
+Animation:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1000011742669328}
+  m_Enabled: 1
+  serializedVersion: 4
+  m_Animation: {fileID: 0}
+  m_Animations: []
+  m_WrapMode: 0
+  m_PlayAutomatically: 1
+  m_AnimatePhysics: 0
+  m_UpdateMode: 0
+  m_CullingType: 0
 --- !u!1 &1000011811995576
 GameObject:
   m_ObjectHideFlags: 0

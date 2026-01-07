@@ -378,6 +378,7 @@ GameObject:
   - component: {fileID: -1132475937284224269}
   - component: {fileID: 6148503164321994104}
   - component: {fileID: 3745429946913948405}
+  - component: {fileID: 5144209551978006429}
   m_Layer: 0
   m_Name: Priest
   m_TagString: Untagged
@@ -465,6 +466,7 @@ MonoBehaviour:
   team: 1
   isRanged: 1
   projectilePrefab: {fileID: -2253911629886400664, guid: a36fba8864ba09a41bb8f8fb71902c78, type: 3}
+  projectileSpawnOffset: {x: 0.1, y: 0.45}
   unitName: Unit
   cost: 25
   killReward: 15
@@ -473,6 +475,12 @@ MonoBehaviour:
   speed: 2
   attackRange: 0.3
   attackRate: 1
+  idleAnimName: Idle
+  walkAnimName: Walk
+  attackAnimName: Attack
+  castAnimName: Cast
+  hurtAnimName: Hurt
+  dieAnimName: Die
   currentHP: 0
 --- !u!70 &3745429946913948405
 CapsuleCollider2D:
@@ -511,6 +519,22 @@ CapsuleCollider2D:
   m_Offset: {x: 0, y: 0}
   m_Size: {x: 0.5, y: 1}
   m_Direction: 0
+--- !u!111 &5144209551978006429
+Animation:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1000013034572668}
+  m_Enabled: 1
+  serializedVersion: 4
+  m_Animation: {fileID: 0}
+  m_Animations: []
+  m_WrapMode: 0
+  m_PlayAutomatically: 1
+  m_AnimatePhysics: 0
+  m_UpdateMode: 0
+  m_CullingType: 0
 --- !u!1 &1000013226060160
 GameObject:
   m_ObjectHideFlags: 0
