@@ -138,9 +138,9 @@ public class Unit : MonoBehaviour
         {
             // Archer (ranged). Needs projectilePrefab on the prefab.
             presetHp = 75f;
-            presetDamage = 8f;
+            presetDamage = 6.4f;   // -20% damage
             presetSpeed = 2.2f;
-            presetRange = 18f;  // Range mare pentru arcaș - să tragă de departe
+            presetRange = 8f;     // -2 range
             presetAttackRate = 0.85f;
             presetIsRanged = (projectilePrefab != null);
 
@@ -163,9 +163,9 @@ public class Unit : MonoBehaviour
         {
             // Ranged support
             presetHp = 80f;
-            presetDamage = 10f;
+            presetDamage = 8f;    // -20% damage
             presetSpeed = 2.0f;
-            presetRange = 10f;
+            presetRange = 8f;     // -2 range
             presetAttackRate = 1.1f;
             presetIsRanged = true;
 
@@ -270,7 +270,9 @@ public class Unit : MonoBehaviour
         {
             if (hit.gameObject == this.gameObject) continue;
             
-            Unit targetUnit = hit.GetComponent<Unit>();
+            // IMPORTANT: multe prefab-uri au collider pe child, iar scriptul Unit pe parent.
+            // Dacă folosim doar GetComponent<Unit>(), unitățile nu detectează baza/ținta.
+            Unit targetUnit = hit.GetComponentInParent<Unit>();
             if (targetUnit != null && targetUnit.team != this.team && targetUnit.currentHP > 0)
             {
                 float distance = Vector2.Distance(transform.position, targetUnit.transform.position);
@@ -367,6 +369,15 @@ public class Unit : MonoBehaviour
 
         if (projectilePrefab == null) return;
         if (pendingRangedTarget == null || pendingRangedTarget.currentHP <= 0) return;
+
+        // Dacă ținta a ieșit din range până la momentul lansării (animation event / fallback timer), anulăm shot-ul.
+        float centerDistance = Vector2.Distance(transform.position, pendingRangedTarget.transform.position);
+        float edgeDistanceNow = GetEdgeDistanceTo(pendingRangedTarget, centerDistance);
+        if (edgeDistanceNow > attackRange + 0.15f)
+        {
+            pendingRangedTarget = null;
+            return;
+        }
 
         Debug.Log($"{gameObject.name} fires projectile at {pendingRangedTarget.gameObject.name} (dist {(pendingRangedTarget.transform.position - transform.position).magnitude:F2})");
 

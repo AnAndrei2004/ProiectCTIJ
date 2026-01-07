@@ -433,12 +433,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Projectile
   speed: 15
-  damage: 100
+  damage: 10
   team: 0
   rotationOffsetDeg: -90
   useBallisticArc: 1
-  arcGravity: -50
-  arcLift: 24
+  arcGravity: 0
+  arcLift: 1
 --- !u!50 &1175838893535591357
 Rigidbody2D:
   serializedVersion: 5
