@@ -172,6 +172,12 @@ public class UnitSpawner : MonoBehaviour
             // Preserve prefab identity for presets/UI/logs.
             unit.unitName = prefab.name;
             go.name = $"{prefab.name} ({team})";
+            
+            // Creează bara de HP pentru această unitate
+            if (HealthBarManager.Instance != null)
+            {
+                HealthBarManager.Instance.CreateHealthBar(unit);
+            }
         }
     }
 

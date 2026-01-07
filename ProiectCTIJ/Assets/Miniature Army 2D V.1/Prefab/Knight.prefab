@@ -13,7 +13,6 @@ GameObject:
   - component: {fileID: 8444176477010598325}
   - component: {fileID: -7950770764669480771}
   - component: {fileID: -7264057275157915838}
-  - component: {fileID: 5040893086016745381}
   m_Layer: 0
   m_Name: Knight
   m_TagString: Untagged
@@ -110,12 +109,6 @@ MonoBehaviour:
   speed: 2
   attackRange: 1.5
   attackRate: 1
-  idleAnimName: Idle
-  walkAnimName: Walk
-  attackAnimName: Attack
-  castAnimName: Cast
-  hurtAnimName: Hurt
-  dieAnimName: Die
   currentHP: 0
 --- !u!70 &-7264057275157915838
 CapsuleCollider2D:
@@ -154,26 +147,6 @@ CapsuleCollider2D:
   m_Offset: {x: 0, y: 0}
   m_Size: {x: 0.5, y: 1}
   m_Direction: 0
---- !u!111 &5040893086016745381
-Animation:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1000010755293042}
-  m_Enabled: 1
-  serializedVersion: 4
-  m_Animation: {fileID: 7400000, guid: 9d48a7a01bd2b4ac2be455308956add9, type: 2}
-  m_Animations:
-  - {fileID: 7400000, guid: 13b4961e9a1ae4a0298c95fc3f85d0f7, type: 2}
-  - {fileID: 7400000, guid: fca2cf49b9cfe46079dd70486883bc82, type: 2}
-  - {fileID: 7400000, guid: 2839325d6eb674a85a21e24b21db15d8, type: 2}
-  - {fileID: 7400000, guid: d8a4e79d82a7f4bfcb305bc101dfea5f, type: 2}
-  m_WrapMode: 0
-  m_PlayAutomatically: 1
-  m_AnimatePhysics: 0
-  m_UpdateMode: 0
-  m_CullingType: 0
 --- !u!1 &1000011164445256
 GameObject:
   m_ObjectHideFlags: 0
