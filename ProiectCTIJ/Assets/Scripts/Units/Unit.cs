@@ -13,6 +13,25 @@ public class Unit : MonoBehaviour
     public GameObject projectilePrefab; // Doar pentru ranged
     [Tooltip("Offset local (x,y) față de pivot pentru a lansa proiectilul din mâna/arcul unității.")]
     public Vector2 projectileSpawnOffset = new Vector2(0.1f, 0.45f);
+
+    [Header("Projectile Spawn Safety")]
+    [Tooltip("Scale-ul aplicat proiectilelor de tip unitate (skeleton etc). 0.5 = vizibil, 1.0 = mai mare.")]
+    public float spawnedProjectileMaxWorldSize = 0.5f;
+
+    [Tooltip("Multiplicator aplicat peste spawnedProjectileMaxWorldSize (ex: Priest 10x). Se aplică doar pentru proiectile mari (skeleton/VFX) care sunt sanitizate în runtime, nu pentru săgeți normale.")]
+    public float spawnedProjectileSizeMultiplier = 1f;
+
+    [Tooltip("Fallback scale dacă nu găsim niciun renderer pe proiectil.")]
+    public float spawnedProjectileFallbackScale = 0.15f;
+
+    [Tooltip("Dezactivează coliziuni/rigidbody pe proiectilul instanțiat (recomandat pentru prefabs mari).")]
+    public bool spawnedProjectileDisablePhysics = true;
+
+    [Tooltip("Dezactivează scripturi de tip Unit/BaseUnit pe proiectil (dacă ai pus din greșeală un prefab de unitate ca proiectil).")]
+    public bool spawnedProjectileDisableUnitBehaviours = true;
+
+    [Tooltip("Dezactivează Animator pe proiectilul instanțiat. Pentru VFX animate (ex: cap de schelet), lasă FALSE.")]
+    public bool spawnedProjectileDisableAnimator = false;
     
     [Header("Stats")]
     public string unitName = "Unit";
@@ -168,6 +187,9 @@ public class Unit : MonoBehaviour
             presetRange = 8f;     // -2 range
             presetAttackRate = 1.1f;
             presetIsRanged = true;
+
+            // User request: make Priest projectiles much bigger (only affects unit-like/VFX projectile prefabs).
+            spawnedProjectileSizeMultiplier = 10f;
 
             cost = 30;
             killReward = 18;
@@ -393,15 +415,90 @@ public class Unit : MonoBehaviour
         Vector3 spawnPos = transform.position + new Vector3(projectileSpawnOffset.x * dirSign, colliderHeight + projectileSpawnOffset.y, 0f);
 
         GameObject proj = Instantiate(projectilePrefab, spawnPos, Quaternion.identity);
-        Projectile projectile = proj.GetComponent<Projectile>();
-        if (projectile != null)
+        
+        // FORȚĂM SCALE-UL PENTRU PRIEST (sau orice unitate care are spawnedProjectileMaxWorldSize != default)
+        // Verificăm dacă unitatea e Priest sau dacă user-ul a setat un scale custom
+        bool isPriest = unitName.Contains("Priest", StringComparison.OrdinalIgnoreCase) || 
+                        gameObject.name.Contains("Priest", StringComparison.OrdinalIgnoreCase);
+        
+        if (isPriest)
         {
-            projectile.Initialize(pendingRangedTarget, (int)pendingRangedDamage, team);
+            // Dezactivează TOT ce ar putea face prefab-ul să se comporte ca unitate
+            foreach (var c in proj.GetComponentsInChildren<MonoBehaviour>(true))
+            {
+                if (c == null) continue;
+                if (c is Projectile) continue; // Păstrează scriptul Projectile
+                c.enabled = false;
+            }
+            foreach (var col in proj.GetComponentsInChildren<Collider2D>(true))
+                if (col != null) col.enabled = false;
+            foreach (var rb in proj.GetComponentsInChildren<Rigidbody2D>(true))
+            {
+                if (rb == null) continue;
+                rb.linearVelocity = Vector2.zero;
+                rb.simulated = false;
+            }
+            
+            // SCALE FIX HARDCODAT: 0.04 pentru skeleton (mic dar vizibil)
+            float priestScale = 0.04f;
+            proj.transform.localScale = new Vector3(priestScale, priestScale, priestScale);
+            Debug.Log($"[Priest] Projectile scale set to {priestScale}. Object: {proj.name}");
         }
         else
         {
-            Debug.LogWarning($"{gameObject.name} spawned projectile prefab without Projectile component: {proj.name}");
+            // Pentru alte unități (archer etc), nu modificăm scale-ul
+            ConfigureSpawnedProjectile(proj);
         }
+        
+        Projectile projectile = proj.GetComponent<Projectile>();
+        if (projectile == null)
+        {
+            // Make it robust: even if the prefab is just a visual (sprite/VFX), add behaviour at runtime.
+            projectile = proj.AddComponent<Projectile>();
+            Debug.LogWarning($"{gameObject.name} spawned projectile prefab without Projectile component; added it at runtime: {proj.name}");
+        }
+
+        projectile.Initialize(pendingRangedTarget, (int)pendingRangedDamage, team);
+    }
+
+    private void ConfigureSpawnedProjectile(GameObject proj)
+    {
+        if (proj == null) return;
+
+        // Verifică dacă prefab-ul e un "unit prefab" (are Unit/BaseUnit/Animator) - adică skeleton etc.
+        bool hasUnitScript = (proj.GetComponentInChildren<Unit>(true) != null) || (proj.GetComponentInChildren<BaseUnit>(true) != null);
+        bool hasAnimator = (proj.GetComponentInChildren<Animator>(true) != null);
+        
+        // Dacă nu e un prefab de tip unitate, nu face nimic (săgețile rămân cum sunt)
+        if (!hasUnitScript && !hasAnimator)
+            return;
+
+        // Dezactivează AI-ul și physics pe proiectil (ca să nu se comporte ca o unitate)
+        Unit[] units = proj.GetComponentsInChildren<Unit>(true);
+        foreach (var u in units) if (u != null) u.enabled = false;
+        
+        BaseUnit[] bases = proj.GetComponentsInChildren<BaseUnit>(true);
+        foreach (var b in bases) if (b != null) b.enabled = false;
+        
+        Collider2D[] cols = proj.GetComponentsInChildren<Collider2D>(true);
+        foreach (var c in cols) if (c != null) c.enabled = false;
+        
+        Rigidbody2D[] rbs = proj.GetComponentsInChildren<Rigidbody2D>(true);
+        foreach (var rb in rbs) 
+        { 
+            if (rb == null) continue;
+            rb.linearVelocity = Vector2.zero;
+            rb.simulated = false; 
+        }
+
+        // Oprește root motion (ca să nu miște proiectilul pe cont propriu)
+        Animator[] anims = proj.GetComponentsInChildren<Animator>(true);
+        foreach (var a in anims) if (a != null) a.applyRootMotion = false;
+
+        // SCALE FIX: pune scale-ul direct la 0.5 (vizibil, nu gigant, nu microscopic)
+        // Poți ajusta din Inspector pe Unit -> spawnedProjectileMaxWorldSize
+        float scale = spawnedProjectileMaxWorldSize;
+        proj.transform.localScale = new Vector3(scale, scale, 1f);
     }
 
     private bool IsAllyBlockingInFront(float direction)
