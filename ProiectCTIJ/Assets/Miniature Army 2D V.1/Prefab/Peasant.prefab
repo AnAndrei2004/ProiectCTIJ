@@ -13,7 +13,6 @@ GameObject:
   - component: {fileID: -8772760267823303240}
   - component: {fileID: -7059762536617996359}
   - component: {fileID: 3755680499783225563}
-  - component: {fileID: -4681770234556189087}
   m_Layer: 0
   m_Name: Peasant
   m_TagString: Untagged
@@ -108,14 +107,8 @@ MonoBehaviour:
   hp: 100
   damage: 10
   speed: 2
-  attackRange: 30
+  attackRange: 100
   attackRate: 1
-  idleAnimName: Idle
-  walkAnimName: Walk
-  attackAnimName: Attack
-  castAnimName: Cast
-  hurtAnimName: Hurt
-  dieAnimName: Die
   currentHP: 0
 --- !u!70 &3755680499783225563
 CapsuleCollider2D:
@@ -154,26 +147,6 @@ CapsuleCollider2D:
   m_Offset: {x: 0, y: 0}
   m_Size: {x: 0.5, y: 1}
   m_Direction: 0
---- !u!111 &-4681770234556189087
-Animation:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1000010854855540}
-  m_Enabled: 1
-  serializedVersion: 4
-  m_Animation: {fileID: 7400000, guid: 148f54f3b5a8f4fd3b1e7b3e26b863ed, type: 2}
-  m_Animations:
-  - {fileID: 7400000, guid: 13b4961e9a1ae4a0298c95fc3f85d0f7, type: 2}
-  - {fileID: 7400000, guid: cae7b1ccf658b4c99b4e5ec4eb041f1b, type: 2}
-  - {fileID: 7400000, guid: ff89252f0b0a74b8db908dc76557a804, type: 2}
-  - {fileID: 7400000, guid: 6e27f754189714261936933224ffccfe, type: 2}
-  m_WrapMode: 0
-  m_PlayAutomatically: 1
-  m_AnimatePhysics: 0
-  m_UpdateMode: 0
-  m_CullingType: 0
 --- !u!1 &1000011210365404
 GameObject:
   m_ObjectHideFlags: 0
@@ -464,8 +437,8 @@ MonoBehaviour:
   team: 0
   rotationOffsetDeg: -90
   useBallisticArc: 1
-  arcGravity: -25
-  arcLift: 6
+  arcGravity: -50
+  arcLift: 24
 --- !u!50 &1175838893535591357
 Rigidbody2D:
   serializedVersion: 5

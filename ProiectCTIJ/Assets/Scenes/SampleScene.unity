@@ -119,6 +119,55 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &126414076
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 126414078}
+  - component: {fileID: 126414077}
+  m_Layer: 0
+  m_Name: HealthBarManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &126414077
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 126414076}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6eeffbcf781124c47a6841d6af0e1fb1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HealthBarManager
+  unitHealthBarPrefab: {fileID: 3082257979593800928, guid: 2e7fbca969184164bb98b7d4d78665c1, type: 3}
+  unitBarOffset: {x: 0, y: 2, z: 0}
+  unitBarScale: {x: 0.004, y: 0.002, z: 1}
+  playerBaseHealthBar: {fileID: 0}
+  enemyBaseHealthBar: {fileID: 0}
+--- !u!4 &126414078
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 126414076}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.16771, y: 0.96391, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &206772352
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -137,11 +186,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4444394084400127970, guid: 23c6b26f65f6fce4e8fddeb4526b127e, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 19.54
+      value: 19.38
       objectReference: {fileID: 0}
     - target: {fileID: 4444394084400127970, guid: 23c6b26f65f6fce4e8fddeb4526b127e, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -1.14
+      value: -1.3
       objectReference: {fileID: 0}
     - target: {fileID: 4444394084400127970, guid: 23c6b26f65f6fce4e8fddeb4526b127e, type: 3}
       propertyPath: m_LocalPosition.z
@@ -427,6 +476,7 @@ MonoBehaviour:
   team: 0
   isRanged: 0
   projectilePrefab: {fileID: 0}
+  projectileSpawnOffset: {x: 0.1, y: 0.45}
   unitName: Unit
   cost: 25
   killReward: 15
@@ -688,6 +738,7 @@ MonoBehaviour:
   team: 0
   isRanged: 0
   projectilePrefab: {fileID: 0}
+  projectileSpawnOffset: {x: 0.1, y: 0.45}
   unitName: Player
   cost: 25
   killReward: 15
@@ -698,6 +749,9 @@ MonoBehaviour:
   attackRate: 1
   currentHP: 0
   isPlayerBase: 1
+  fireEffectPrefab: {fileID: 0}
+  explosionEffectPrefab: {fileID: 0}
+  fireThreshold: 0.3
 --- !u!1 &619394800
 GameObject:
   m_ObjectHideFlags: 0
@@ -894,7 +948,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6836057042734218667, guid: aa24640b13e7b4a4ba61974751a7f4c5, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -18.77
+      value: -18.52
       objectReference: {fileID: 0}
     - target: {fileID: 6836057042734218667, guid: aa24640b13e7b4a4ba61974751a7f4c5, type: 3}
       propertyPath: m_LocalPosition.y
@@ -991,17 +1045,96 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitSpawner
   playerPrefabs:
-  - {fileID: 1000011742669328, guid: 315058484cf2044ce8dcb608b4678ff6, type: 3}
+  - {fileID: 1000013261649242, guid: 7d908ba845b1044e6829ed5fb7c4be10, type: 3}
   - {fileID: 1000010854855540, guid: a3c1faf915dc240bca8ed7566d46910c, type: 3}
   - {fileID: 1000010755293042, guid: 978fa2fb617654f5eaeff9da6fc7d116, type: 3}
   enemyPrefabs:
   - {fileID: 1000012663239756, guid: 13c470c5b8dcd4854834911f7e0a9a6c, type: 3}
   - {fileID: 1000013034572668, guid: 389c7e1a1dabb4e1e917001420b89c9a, type: 3}
-  - {fileID: 1000013261649242, guid: 7d908ba845b1044e6829ed5fb7c4be10, type: 3}
+  - {fileID: 1000011742669328, guid: 315058484cf2044ce8dcb608b4678ff6, type: 3}
   playerSpawnPoint: {fileID: 586121636}
   enemySpawnPoint: {fileID: 1957836877}
   spawnCooldown: 0.5
   enemySpawnInterval: 3
+--- !u!1 &1904198786
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1904198789}
+  - component: {fileID: 1904198788}
+  - component: {fileID: 1904198787}
+  m_Layer: 0
+  m_Name: EventSystem
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1904198787
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1904198786}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 01614664b831546d2ae94a42149d80ac, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.UI.InputSystemUIInputModule
+  m_SendPointerHoverToParent: 1
+  m_MoveRepeatDelay: 0.5
+  m_MoveRepeatRate: 0.1
+  m_XRTrackingOrigin: {fileID: 0}
+  m_ActionsAsset: {fileID: -944628639613478452, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  m_PointAction: {fileID: -1654692200621890270, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  m_MoveAction: {fileID: -8784545083839296357, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  m_SubmitAction: {fileID: 392368643174621059, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  m_CancelAction: {fileID: 7727032971491509709, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  m_LeftClickAction: {fileID: 3001919216989983466, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  m_MiddleClickAction: {fileID: -2185481485913320682, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  m_RightClickAction: {fileID: -4090225696740746782, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  m_ScrollWheelAction: {fileID: 6240969308177333660, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  m_TrackedDevicePositionAction: {fileID: 6564999863303420839, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  m_TrackedDeviceOrientationAction: {fileID: 7970375526676320489, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  m_DeselectOnBackgroundClick: 1
+  m_PointerBehavior: 0
+  m_CursorLockBehavior: 0
+  m_ScrollDeltaPerTick: 6
+--- !u!114 &1904198788
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1904198786}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 76c392e42b5098c458856cdf6ecaaaa1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.EventSystem
+  m_FirstSelected: {fileID: 0}
+  m_sendNavigationEvents: 1
+  m_DragThreshold: 10
+--- !u!4 &1904198789
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1904198786}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1957836875 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 7630959479868361495, guid: 23c6b26f65f6fce4e8fddeb4526b127e, type: 3}
@@ -1091,6 +1224,7 @@ MonoBehaviour:
   team: 1
   isRanged: 0
   projectilePrefab: {fileID: 0}
+  projectileSpawnOffset: {x: 0.1, y: 0.45}
   unitName: Enemy
   cost: 25
   killReward: 15
@@ -1101,6 +1235,9 @@ MonoBehaviour:
   attackRate: 1
   currentHP: 0
   isPlayerBase: 0
+  fireEffectPrefab: {fileID: 0}
+  explosionEffectPrefab: {fileID: 0}
+  fireThreshold: 0.3
 --- !u!1 &1976624763
 GameObject:
   m_ObjectHideFlags: 0
@@ -1268,3 +1405,5 @@ SceneRoots:
   - {fileID: 1518994970}
   - {fileID: 1316791272}
   - {fileID: 206772352}
+  - {fileID: 1904198789}
+  - {fileID: 126414078}

@@ -4,6 +4,17 @@ public class BaseUnit : Unit
 {
     [Header("Base Settings")]
     public bool isPlayerBase;
+    
+    [Header("Visual Effects")]
+    [Tooltip("Prefab pentru efect de foc când baza e low HP")]
+    public GameObject fireEffectPrefab;
+    [Tooltip("Prefab pentru explozie când baza e distrusă")]
+    public GameObject explosionEffectPrefab;
+    [Tooltip("Procentul de HP sub care apare focul (0.3 = 30%)")]
+    [Range(0f, 1f)] public float fireThreshold = 0.3f;
+    
+    private GameObject activeFireEffect;
+    private bool fireStarted = false;
 
     protected override void Start()
     {
@@ -36,7 +47,23 @@ public class BaseUnit : Unit
     {
         if (currentHP <= 0) return;
 
-        // Bazele nu se mișcă și nu caută ținte ca unitățile mobile
+        // Verifică dacă trebuie să pornească efectul de foc
+        CheckFireEffect();
+    }
+    
+    void CheckFireEffect()
+    {
+        if (fireEffectPrefab == null) return;
+        
+        float healthPercent = currentHP / hp;
+        
+        // Pornește focul când HP scade sub threshold
+        if (!fireStarted && healthPercent <= fireThreshold && healthPercent > 0)
+        {
+            fireStarted = true;
+            activeFireEffect = Instantiate(fireEffectPrefab, transform.position, Quaternion.identity, transform);
+            Debug.Log($"{(isPlayerBase ? "Player" : "Enemy")} Base is on fire! HP: {healthPercent * 100:F0}%");
+        }
     }
 
     public override void TakeDamage(float amount)
@@ -53,11 +80,27 @@ public class BaseUnit : Unit
     void Die()
     {
         Debug.Log("Baza a fost distrusă!");
+        
+        // Oprește efectul de foc
+        if (activeFireEffect != null)
+        {
+            Destroy(activeFireEffect);
+        }
+        
+        // Spawn efect de explozie
+        if (explosionEffectPrefab != null)
+        {
+            GameObject explosion = Instantiate(explosionEffectPrefab, transform.position, Quaternion.identity);
+            // Distruge explozia după 3 secunde (sau lasă-l să se auto-distrugă)
+            Destroy(explosion, 3f);
+        }
+        
         // Anunțăm GameManager că s-a terminat jocul
         if (GameManager.Instance != null)
         {
             GameManager.Instance.EndGame(!isPlayerBase);
         }
+        
         Destroy(gameObject);
     }
 }

@@ -24,18 +24,10 @@ public class Unit : MonoBehaviour
     public float attackRange = 0.8f;  // Redus pentru melee, 3-5 pentru ranged
     public float attackRate = 1f;
 
-    [Header("Animation Names - Setează în Inspector sau lasă default")]
-    public string idleAnimName = "Idle";
-    public string walkAnimName = "Walk";
-    public string attackAnimName = "Attack";
-    public string castAnimName = "Cast";      // Pentru ranged
-    public string hurtAnimName = "Hurt";
-    public string dieAnimName = "Die";
-
     [Header("Components")]
-    private Animation animationComponent;
+    private Animator animator;
 
-    private bool hasCastAnim;
+    private bool hasCastTrigger;
     
     [Header("Runtime")]
     public float currentHP; // Public pentru a putea fi accesat din alte scripturi
@@ -55,22 +47,26 @@ public class Unit : MonoBehaviour
 
     protected virtual void Start()
     {
-        animationComponent = GetComponent<Animation>();
+        animator = GetComponent<Animator>();
         
-        // Dacă nu avem Animation, încercăm să o adăugăm
-        if (animationComponent == null)
+        // DEZACTIVEAZĂ ROOT MOTION - altfel animațiile mișcă unitățile pe Y!
+        if (animator != null)
         {
-            // Încearcă să găsești în copii
-            animationComponent = GetComponentInChildren<Animation>();
-        }
-        
-        if (animationComponent != null)
-        {
-            // Verifică dacă avem animația de cast
-            hasCastAnim = animationComponent.GetClip(castAnimName) != null;
-            
-            // Pornește cu Idle
-            PlayAnimation(idleAnimName);
+            animator.applyRootMotion = false;
+
+            hasCastTrigger = HasAnimatorParameter(animator, "cast");
+
+            // Safety: ensure we don't spawn in a stale/true trigger state.
+            try
+            {
+                animator.ResetTrigger("attack");
+                if (hasCastTrigger) animator.ResetTrigger("cast");
+                animator.ResetTrigger("hurt");
+                animator.ResetTrigger("die");
+                animator.SetBool("isWalking", false);
+                animator.SetBool("isAttacking", false);
+            }
+            catch { }
         }
 
         // Apply simple role presets based on prefab/name so the gameplay is readable and strategic.
@@ -144,7 +140,7 @@ public class Unit : MonoBehaviour
             presetHp = 75f;
             presetDamage = 8f;
             presetSpeed = 2.2f;
-            presetRange = 10f;
+            presetRange = 18f;  // Range mare pentru arcaș - să tragă de departe
             presetAttackRate = 0.85f;
             presetIsRanged = (projectilePrefab != null);
 
@@ -222,8 +218,15 @@ public class Unit : MonoBehaviour
             if (rbStop != null)
                 rbStop.linearVelocity = Vector2.zero;
 
-            // Când stă pe loc, redă Idle
-            PlayAnimation(idleAnimName);
+            if (animator != null && animator.isActiveAndEnabled)
+            {
+                try
+                {
+                    animator.SetBool("isWalking", false);
+                    animator.SetBool("isAttacking", false);
+                }
+                catch { }
+            }
             return;
         }
         
@@ -239,8 +242,15 @@ public class Unit : MonoBehaviour
             transform.Translate(Vector2.right * direction * speed * Time.deltaTime);
         }
         
-        // Când merge, redă Walk
-        PlayAnimation(walkAnimName);
+        if (animator != null && animator.isActiveAndEnabled)
+        {
+            try
+            {
+                animator.SetBool("isWalking", true);
+                animator.SetBool("isAttacking", false);
+            }
+            catch { }
+        }
     }
 
     void DetectEnemy()
@@ -302,6 +312,17 @@ public class Unit : MonoBehaviour
             rb.linearVelocity = Vector2.zero;
         }
 
+        if (animator != null && animator.isActiveAndEnabled)
+        {
+            try
+            {
+                animator.SetBool("isWalking", false);
+                // For ranged, prefer casting animation via trigger; don't force melee attack state.
+                animator.SetBool("isAttacking", !isRanged);
+            }
+            catch { }
+        }
+
         if (Time.time >= nextAttackTime)
         {
             nextAttackTime = Time.time + attackRate;
@@ -313,38 +334,27 @@ public class Unit : MonoBehaviour
                 pendingRangedTarget = currentTarget;
                 pendingRangedDamage = damage;
                 pendingRangedFireTime = Time.time + 0.35f;
-                
-                // Redă animația de cast pentru ranged
-                if (hasCastAnim)
-                {
-                    PlayAnimation(castAnimName, PlayMode.StopAll);
-                }
-                else
-                {
-                    PlayAnimation(attackAnimName, PlayMode.StopAll);
-                }
             }
             else
             {
                 // MELEE ATTACK - damage direct
                 currentTarget.TakeDamage(damage);
-                
-                // Redă animația de atac
-                PlayAnimation(attackAnimName, PlayMode.StopAll);
             }
             
-            // Dacă nu avem Animation component, trage imediat pentru ranged
-            if (animationComponent == null && isRanged && projectilePrefab != null)
+            if (animator != null && animator.isActiveAndEnabled)
             {
-                FireRangedProjectile();
+                // Pentru toate unitățile (ranged sau melee), folosim trigger "attack"
+                // "cast" era doar pentru vrăjitori cu animație separată de casting
+                try { animator.SetTrigger("attack"); } catch { }
+            }
+            else
+            {
+                // No animator: fire immediately for ranged.
+                if (isRanged && projectilePrefab != null)
+                    FireRangedProjectile();
             }
             
             Debug.Log(gameObject.name + " a atacat pe " + currentTarget.gameObject.name);
-        }
-        else
-        {
-            // Între atacuri, redă Idle (stă pe loc așteptând cooldown)
-            PlayAnimation(idleAnimName);
         }
     }
 
@@ -381,45 +391,6 @@ public class Unit : MonoBehaviour
         {
             Debug.LogWarning($"{gameObject.name} spawned projectile prefab without Projectile component: {proj.name}");
         }
-    }
-
-    /// <summary>
-    /// Redă o animație direct prin Animation.Play().
-    /// Oferă control complet și evită conflictele din Animator.
-    /// </summary>
-    private void PlayAnimation(string animName, PlayMode mode = PlayMode.StopSameLayer)
-    {
-        if (animationComponent == null || string.IsNullOrEmpty(animName)) return;
-        
-        // Verifică dacă animația există
-        if (animationComponent.GetClip(animName) == null)
-        {
-            // Încearcă variante comune ale numelui
-            string[] variants = { animName, animName.ToLower(), animName.ToUpper(), 
-                                  animName + "_anim", animName + "Animation" };
-            foreach (string variant in variants)
-            {
-                if (animationComponent.GetClip(variant) != null)
-                {
-                    animationComponent.Play(variant, mode);
-                    return;
-                }
-            }
-            return; // Nu am găsit animația
-        }
-        
-        animationComponent.Play(animName, mode);
-    }
-    
-    /// <summary>
-    /// CrossFade către o animație pentru tranziții mai smooth.
-    /// </summary>
-    private void CrossFadeAnimation(string animName, float fadeTime = 0.1f)
-    {
-        if (animationComponent == null || string.IsNullOrEmpty(animName)) return;
-        if (animationComponent.GetClip(animName) == null) return;
-        
-        animationComponent.CrossFade(animName, fadeTime);
     }
 
     private bool IsAllyBlockingInFront(float direction)
@@ -478,8 +449,11 @@ public class Unit : MonoBehaviour
     {
         currentHP -= amount;
         
-        // Redă animația de hurt
-        PlayAnimation(hurtAnimName, PlayMode.StopAll);
+        if (animator != null && animator.isActiveAndEnabled)
+        {
+            try { animator.SetTrigger("hurt"); }
+            catch { }
+        }
         
         Debug.Log($"{unitName} took {amount} damage. Current HP: {currentHP}/{hp}");
         
@@ -509,25 +483,33 @@ public class Unit : MonoBehaviour
     {
         Debug.Log(gameObject.name + " a murit.");
         
-        // Redă animația de moarte - StopAll pentru a opri orice altă animație
-        PlayAnimation(dieAnimName, PlayMode.StopAll);
+        if (animator != null && animator.isActiveAndEnabled)
+        {
+            try
+            {
+                animator.SetTrigger("die");
+                animator.SetBool("isWalking", false);
+                animator.SetBool("isAttacking", false);
+            }
+            catch { }
+        }
         
         if (team == Team.Enemy && GameManager.Instance != null)
         {
             GameManager.Instance.AddKillReward(killReward);
         }
         
-        // Determină durata animației de moarte pentru a distruge la final
-        float destroyDelay = 0.5f;
-        if (animationComponent != null)
+        Destroy(gameObject, 0.5f);
+    }
+
+    private static bool HasAnimatorParameter(Animator anim, string name)
+    {
+        if (anim == null || string.IsNullOrEmpty(name)) return false;
+        var parameters = anim.parameters;
+        for (int i = 0; i < parameters.Length; i++)
         {
-            AnimationClip dieClip = animationComponent.GetClip(dieAnimName);
-            if (dieClip != null)
-            {
-                destroyDelay = dieClip.length;
-            }
+            if (parameters[i].name == name) return true;
         }
-        
-        Destroy(gameObject, destroyDelay);
+        return false;
     }
 }
