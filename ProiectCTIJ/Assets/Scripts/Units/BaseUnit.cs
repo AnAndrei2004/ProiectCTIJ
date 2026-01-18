@@ -22,7 +22,7 @@ public class BaseUnit : Unit
         team = isPlayerBase ? Team.Player : Team.Enemy;
         
         // Bazele au HP fix
-        hp = 2000f;
+        hp = isPlayerBase ? 300f : 300f;
         attackRange = 0f;
         damage = 0f;
         speed = 0f;
@@ -55,14 +55,21 @@ public class BaseUnit : Unit
     {
         if (fireEffectPrefab == null) return;
         
-        float healthPercent = currentHP / hp;
-        
-        // Pornește focul când HP scade sub threshold
-        if (!fireStarted && healthPercent <= fireThreshold && healthPercent > 0)
+        // Pornește focul când HP scade sub 150
+        if (!fireStarted && currentHP <= 150f && currentHP > 0)
         {
             fireStarted = true;
             activeFireEffect = Instantiate(fireEffectPrefab, transform.position, Quaternion.identity, transform);
-            Debug.Log($"{(isPlayerBase ? "Player" : "Enemy")} Base is on fire! HP: {healthPercent * 100:F0}%");
+            
+            // Asigură-te că efectul de foc este în loop
+            ParticleSystem ps = activeFireEffect.GetComponent<ParticleSystem>();
+            if (ps != null)
+            {
+                var main = ps.main;
+                main.loop = true;
+            }
+            
+            Debug.Log($"{(isPlayerBase ? "Player" : "Enemy")} Base is on fire! HP: {currentHP:F0}");
         }
     }
 
@@ -91,16 +98,25 @@ public class BaseUnit : Unit
         if (explosionEffectPrefab != null)
         {
             GameObject explosion = Instantiate(explosionEffectPrefab, transform.position, Quaternion.identity);
-            // Distruge explozia după 3 secunde (sau lasă-l să se auto-distrugă)
-            Destroy(explosion, 3f);
+            // Distruge explozia după 5 secunde
+            Destroy(explosion, 5f);
         }
         
-        // Anunțăm GameManager că s-a terminat jocul
+        // Așteaptă câteva secunde pentru a vedea explozia înainte de a termina jocul
         if (GameManager.Instance != null)
         {
-            GameManager.Instance.EndGame(!isPlayerBase);
+            StartCoroutine(DelayedEndGame());
         }
         
-        Destroy(gameObject);
+        Destroy(gameObject, 0.5f);
+    }
+    
+    System.Collections.IEnumerator DelayedEndGame()
+    {
+        // Așteaptă 3 secunde pentru a vedea explozia
+        yield return new WaitForSeconds(3f);
+        
+        // Acum terminăm jocul
+        GameManager.Instance.EndGame(!isPlayerBase);
     }
 }

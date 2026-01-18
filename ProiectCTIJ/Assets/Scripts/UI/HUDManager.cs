@@ -28,6 +28,6 @@ public class HUDManager : MonoBehaviour
     public void UpdateBaseHP(float playerHP, float enemyHP)
     {
         if (playerBaseHPBar) playerBaseHPBar.value = playerHP / 2000f;
-        if (enemyBaseHPBar) enemyBaseHPBar.value = enemyHP / 2000f;
+        if (enemyBaseHPBar) enemyBaseHPBar.value = enemyHP / 300f;
     }
 }
