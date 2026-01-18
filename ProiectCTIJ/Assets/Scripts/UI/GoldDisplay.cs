@@ -2,26 +2,26 @@ using UnityEngine;
 using TMPro;
 
 /// <summary>
-/// Afișează gold-ul jucătorului în UI.
-/// Atașează pe un GameObject cu TextMeshProUGUI.
+/// Afiseaza gold-ul jucatorului in UI.
+/// Ataseaza pe un GameObject cu TextMeshProUGUI.
 /// </summary>
 public class GoldDisplay : MonoBehaviour
 {
     [Header("References")]
-    [Tooltip("Textul care afișează gold-ul. Dacă nu e setat, caută automat pe acest GameObject.")]
+    [Tooltip("Textul care afiseaza gold-ul. Daca nu e setat, cauta automat pe acest GameObject.")]
     public TextMeshProUGUI goldText;
     
     [Header("Display Settings")]
-    [Tooltip("Prefixul afișat înainte de număr (ex: 'Gold: ')")]
+    [Tooltip("Prefixul afisat inainte de numar (ex: 'Gold: ')")]
     public string prefix = "Gold: ";
-    [Tooltip("Sufixul afișat după număr (ex: ' G')")]
+    [Tooltip("Sufixul afisat dupa numar (ex: ' G')")]
     public string suffix = "";
-    [Tooltip("Afișează și iconița de gold")]
+    [Tooltip("Afiseaza si iconita de gold")]
     public bool showIcon = true;
-    public string iconPrefix = "💰 ";  // Emoji sau lasă gol
+    public string iconPrefix = "💰 ";  // Emoji sau lasa gol
     
     [Header("Animation")]
-    [Tooltip("Animează schimbarea gold-ului")]
+    [Tooltip("Animeaza schimbarea gold-ului")]
     public bool animateChanges = true;
     public float animationSpeed = 5f;
     public Color gainColor = Color.green;
@@ -32,15 +32,16 @@ public class GoldDisplay : MonoBehaviour
     private int targetGold;
     private float colorTimer;
     
+    // Initializeaza referinta la text si valorile initiale.
     void Start()
     {
-        // Găsește textul automat dacă nu e setat
+        // Gaseste textul automat daca nu e setat
         if (goldText == null)
         {
             goldText = GetComponent<TextMeshProUGUI>();
         }
         
-        // Inițializează cu gold-ul curent
+        // Initializeaza cu gold-ul curent
         if (GameManager.Instance != null)
         {
             displayedGold = Mathf.FloorToInt(GameManager.Instance.currentGold);
@@ -49,20 +50,21 @@ public class GoldDisplay : MonoBehaviour
         
         UpdateDisplay();
     }
-    
+
+    // Actualizeaza animatia si textul de gold.
     void Update()
     {
         if (GameManager.Instance == null || goldText == null) return;
         
         int currentGold = Mathf.FloorToInt(GameManager.Instance.currentGold);
         
-        // Detectează schimbări
+        // Detecteaza schimbari
         if (currentGold != targetGold)
         {
             int diff = currentGold - targetGold;
             targetGold = currentGold;
             
-            // Schimbă culoarea temporar
+            // Schimba culoarea temporar
             if (animateChanges)
             {
                 goldText.color = diff > 0 ? gainColor : loseColor;
@@ -70,7 +72,7 @@ public class GoldDisplay : MonoBehaviour
             }
         }
         
-        // Animează numărul
+        // Animeaza numarul
         if (animateChanges && displayedGold != targetGold)
         {
             float step = animationSpeed * Mathf.Abs(targetGold - displayedGold) * Time.deltaTime;
@@ -100,7 +102,8 @@ public class GoldDisplay : MonoBehaviour
         
         UpdateDisplay();
     }
-    
+
+    // Compune textul final pentru afisare.
     void UpdateDisplay()
     {
         if (goldText == null) return;

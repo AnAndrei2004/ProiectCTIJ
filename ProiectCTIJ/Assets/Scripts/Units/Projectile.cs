@@ -19,6 +19,7 @@ public class Projectile : MonoBehaviour
     private Vector3 lastPosition;
     private readonly RaycastHit2D[] segmentHits = new RaycastHit2D[16];
     
+    // Initializeaza proiectilul cu tinta, damage si echipa.
     public void Initialize(Unit targetUnit, int projectileDamage, Team sourceTeam)
     {
         initialized = true;
@@ -30,10 +31,10 @@ public class Projectile : MonoBehaviour
         spawnPosition = transform.position;
         lastPosition = transform.position;
         
-        // Zboară ORIZONTAL - doar pe X, fără să intre în pământ
+        // Zboara ORIZONTAL - doar pe X, fara sa intre in pamant
         direction = (team == Team.Player) ? Vector3.right : Vector3.left;
         
-        // Rotația e fixă - orizontală
+        // Rotatia e fixa - orizontala
         float angle = (team == Team.Player) ? 0f : 180f;
         transform.rotation = Quaternion.Euler(0, 0, angle + rotationOffsetDeg);
         CancelInvoke();
@@ -41,16 +42,17 @@ public class Projectile : MonoBehaviour
         
         Debug.Log("[Arrow] Fired at " + (target != null ? target.gameObject.name : "none"));
     }
-    
+
+    // Update miscarea proiectilului si coliziunile.
     void Update()
     {
         if (!initialized || hasHit) return;
 
-        // Zboară doar orizontal - nu urmărește ținta pe Y
+        // Zboara doar orizontal - nu urmareste tinta pe Y
         Vector3 nextPosition = transform.position + direction * speed * Time.deltaTime;
 
-        // IMPORTANT: anti-tunneling. Projectile rapide pot trece prin collider fără OnTrigger.
-        // Verificăm segmentul parcurs în acest frame.
+        // IMPORTANT: anti-tunneling. Proiectile rapide pot trece prin collider fara OnTrigger.
+        // Verificam segmentul parcurs in acest frame.
         TryHitAlongSegment(transform.position, nextPosition);
         if (hasHit) return;
 
@@ -65,13 +67,14 @@ public class Projectile : MonoBehaviour
         }
     }
     
-    // Rotația e setată o singură dată în Initialize()
+    // Rotatia e setata o singura data in Initialize()
     
+    // Verifica lovirea cu overlap simplu.
     void CheckHit()
     {
         if (hasHit) return;
         
-        // Verifică coliziune cu ORICE inamic în cale - rază mare pe Y pentru că zboară orizontal
+        // Verifica coliziune cu ORICE inamic in cale - raza mare pe Y pentru ca zboara orizontal
         Collider2D[] cols = Physics2D.OverlapCircleAll(transform.position, 0.6f);
         if (cols != null)
         {
@@ -82,7 +85,7 @@ public class Projectile : MonoBehaviour
                 Unit unit = col.GetComponentInParent<Unit>();
                 if (unit != null && unit.team != team && unit.currentHP > 0)
                 {
-                    // Verifică că suntem aproape pe X (săgeata zboară orizontal)
+                    // Verifica ca suntem aproape pe X (sageata zboara orizontal)
                     float deltaX = Mathf.Abs(transform.position.x - unit.transform.position.x);
                     if (deltaX < 0.5f)
                     {
@@ -94,6 +97,7 @@ public class Projectile : MonoBehaviour
         }
     }
 
+    // Verifica lovirea pe segmentul parcurs in acest frame.
     private void TryHitAlongSegment(Vector3 from, Vector3 to)
     {
         if (hasHit) return;
@@ -101,7 +105,7 @@ public class Projectile : MonoBehaviour
         ContactFilter2D filter = new ContactFilter2D();
         filter.useLayerMask = true;
         filter.layerMask = ~0;
-        filter.useTriggers = true; // include triggers indiferent de setările globale
+        filter.useTriggers = true; // include triggers indiferent de setarile globale
 
         int count = Physics2D.Linecast(from, to, filter, segmentHits);
         if (count <= 0) return;
@@ -119,7 +123,8 @@ public class Projectile : MonoBehaviour
             }
         }
     }
-    
+
+    // Aplica damage si distruge proiectilul.
     void ApplyHit(Unit unit)
     {
         if (hasHit || unit == null) return;
@@ -129,7 +134,8 @@ public class Projectile : MonoBehaviour
         unit.TakeDamage(damage);
         Destroy(gameObject);
     }
-    
+
+    // Coliziune prin trigger (fallback).
     void OnTriggerEnter2D(Collider2D collision)
     {
         if (!initialized || hasHit) return;

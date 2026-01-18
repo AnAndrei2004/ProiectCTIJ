@@ -43,7 +43,7 @@ Proiect Unity 2D tip **lane battler** (o singură bandă). Jucătorul și AI-ul 
 
 ## ✅ Taskuri implementate (15)
 1. Inițializare proiect Unity 2D (URP) și structură de bază.
-2. Configurare .gitignore pentru proiect Unity.
+2. Stack la baze: unitățile nu se mai blochează între ele când lovesc o bază (maxim de damage).
 3. Scenă de meniu cu buton Play (încărcare scenă joc).
 4. Sistem de spawn unități pentru player și enemy.
 5. UI pentru spawn unități (butoane + costuri/cooldown).

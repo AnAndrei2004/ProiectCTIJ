@@ -6,9 +6,9 @@ public class BaseUnit : Unit
     public bool isPlayerBase;
     
     [Header("Visual Effects")]
-    [Tooltip("Prefab pentru efect de foc când baza e low HP")]
+    [Tooltip("Prefab pentru efect de foc cand baza e low HP")]
     public GameObject fireEffectPrefab;
-    [Tooltip("Prefab pentru explozie când baza e distrusă")]
+    [Tooltip("Prefab pentru explozie cand baza e distrusa")]
     public GameObject explosionEffectPrefab;
     [Tooltip("Procentul de HP sub care apare focul (0.3 = 30%)")]
     [Range(0f, 1f)] public float fireThreshold = 0.3f;
@@ -16,9 +16,10 @@ public class BaseUnit : Unit
     private GameObject activeFireEffect;
     private bool fireStarted = false;
 
+    // Initializeaza baza si seteaza atributele fixe.
     protected override void Start()
     {
-        // Setăm echipa în funcție de tipul bazei
+        // Setam echipa in functie de tipul bazei
         team = isPlayerBase ? Team.Player : Team.Enemy;
         
         // Bazele au HP fix
@@ -27,11 +28,11 @@ public class BaseUnit : Unit
         damage = 0f;
         speed = 0f;
         
-        // IMPORTANT: Apelăm base.Start() pentru a initializa currentHP
+        // IMPORTANT: Apelam base.Start() pentru a initializa currentHP
         base.Start();
 
-        // Bazele NU trebuie să fie împinse de unități prin fizică.
-        // Unit.Start() setează implicit Rigidbody2D pe Dynamic; pentru baze îl forțăm pe Static.
+        // Bazele NU trebuie sa fie impinse de unitati prin fizica.
+        // Unit.Start() seteaza implicit Rigidbody2D pe Dynamic; pentru baze il fortam pe Static.
         Rigidbody2D rb = GetComponent<Rigidbody2D>();
         if (rb != null)
         {
@@ -43,25 +44,27 @@ public class BaseUnit : Unit
         }
     }
 
+    // Update pentru efectul de foc al bazei.
     protected override void Update()
     {
         if (currentHP <= 0) return;
 
-        // Verifică dacă trebuie să pornească efectul de foc
+        // Verifica daca trebuie sa porneasca efectul de foc
         CheckFireEffect();
     }
-    
+
+    // Porneste efectul de foc cand baza are HP scazut.
     void CheckFireEffect()
     {
         if (fireEffectPrefab == null) return;
         
-        // Pornește focul când HP scade sub 150
+        // Porneste focul cand HP scade sub 150
         if (!fireStarted && currentHP <= 150f && currentHP > 0)
         {
             fireStarted = true;
             activeFireEffect = Instantiate(fireEffectPrefab, transform.position, Quaternion.identity, transform);
             
-            // Asigură-te că efectul de foc este în loop
+            // Asigura-te ca efectul de foc este in loop
             ParticleSystem ps = activeFireEffect.GetComponent<ParticleSystem>();
             if (ps != null)
             {
@@ -73,6 +76,7 @@ public class BaseUnit : Unit
         }
     }
 
+    // Suprascriere: primeste damage si verifica distrugerea bazei.
     public override void TakeDamage(float amount)
     {
         currentHP -= amount;
@@ -84,11 +88,12 @@ public class BaseUnit : Unit
         }
     }
 
+    // Proceseaza distrugerea bazei.
     void Die()
     {
-        Debug.Log("Baza a fost distrusă!");
+        Debug.Log("Baza a fost distrusa!");
         
-        // Oprește efectul de foc
+        // Opreste efectul de foc
         if (activeFireEffect != null)
         {
             Destroy(activeFireEffect);
@@ -98,11 +103,11 @@ public class BaseUnit : Unit
         if (explosionEffectPrefab != null)
         {
             GameObject explosion = Instantiate(explosionEffectPrefab, transform.position, Quaternion.identity);
-            // Distruge explozia după 5 secunde
+            // Distruge explozia dupa 5 secunde
             Destroy(explosion, 5f);
         }
         
-        // Așteaptă câteva secunde pentru a vedea explozia înainte de a termina jocul
+        // Asteapta cateva secunde pentru a vedea explozia inainte de a termina jocul
         if (GameManager.Instance != null)
         {
             StartCoroutine(DelayedEndGame());
@@ -110,13 +115,14 @@ public class BaseUnit : Unit
         
         Destroy(gameObject, 0.5f);
     }
-    
+
+    // Termina jocul dupa un mic delay.
     System.Collections.IEnumerator DelayedEndGame()
     {
-        // Așteaptă 3 secunde pentru a vedea explozia
+        // Asteapta 3 secunde pentru a vedea explozia
         yield return new WaitForSeconds(3f);
         
-        // Acum terminăm jocul
+        // Acum terminam jocul
         GameManager.Instance.EndGame(!isPlayerBase);
     }
 }

@@ -16,6 +16,7 @@ public class GameManager : MonoBehaviour
     public event Action OnGoldChanged;
     public event Action<bool> OnGameOver;
 
+    // Initializeaza singletonul GameManager.
     private void Awake()
     {
         if (Instance == null)
@@ -29,6 +30,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    // Update pentru economie si stare joc.
     private void Update()
     {
         if (isGameOver || isPaused) return;
@@ -36,6 +38,7 @@ public class GameManager : MonoBehaviour
         UpdateGold(goldPerSecond * Time.deltaTime);
     }
 
+    // Modifica gold-ul curent si notifica UI.
     public void UpdateGold(float amount)
     {
         currentGold += amount;
@@ -43,7 +46,7 @@ public class GameManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Adaugă recompensă pentru uciderea unui inamic
+    /// Adauga recompensa pentru uciderea unui inamic
     /// </summary>
     public void AddKillReward(int reward)
     {
@@ -52,6 +55,7 @@ public class GameManager : MonoBehaviour
         OnGoldChanged?.Invoke();
     }
 
+    // Marcheaza sfarsitul jocului si opreste timpul.
     public void EndGame(bool playerWon)
     {
         isGameOver = true;
@@ -59,6 +63,7 @@ public class GameManager : MonoBehaviour
         Time.timeScale = 0f;
     }
 
+    // Comuta pauza jocului.
     public void TogglePause()
     {
         isPaused = !isPaused;

@@ -5,21 +5,23 @@ public class InputManager : MonoBehaviour
 {
     private Keyboard keyboard;
 
+    // Initializeaza dispozitivul de input.
     private void Start()
     {
         keyboard = Keyboard.current;
     }
 
+    // Proceseaza inputul de la tastatura.
     void Update()
     {
         if (keyboard == null || GameManager.Instance.isGameOver) return;
 
-        // Spawn Units
+        // Spawn unitati
         if (keyboard.digit1Key.wasPressedThisFrame) UnitSpawner.Instance.SpawnUnit(0, Team.Player);
         if (keyboard.digit2Key.wasPressedThisFrame) UnitSpawner.Instance.SpawnUnit(1, Team.Player);
         if (keyboard.digit3Key.wasPressedThisFrame) UnitSpawner.Instance.SpawnUnit(2, Team.Player);
 
-        // Abilities
+        // Abilitati
         if (keyboard.qKey.wasPressedThisFrame) UseRallyAbility();
 
         // UI
@@ -27,15 +29,17 @@ public class InputManager : MonoBehaviour
         if (keyboard.escapeKey.wasPressedThisFrame) GameManager.Instance.TogglePause();
     }
 
+    // Placeholder pentru abilitatea Rally.
     private void UseRallyAbility()
     {
         Debug.Log("Rally Ability Activated! +20% Attack Rate for 6s");
-        // Implementation would involve a temporary buff to all player units
+        // Implementarea ar aplica un buff temporar la unitati
     }
 
+    // Placeholder pentru deschiderea panoului de upgrade.
     private void ToggleUpgradePanel()
     {
         Debug.Log("Toggling Upgrade Panel");
-        // Implementation would involve UI Manager
+        // Implementarea ar folosi un manager UI
     }
 }

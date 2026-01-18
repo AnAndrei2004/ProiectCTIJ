@@ -24,11 +24,13 @@ public class UnitSpawner : MonoBehaviour
 
     private int enemySpawnStep = 0;
 
+    // Initializeaza instanta singleton.
     private void Awake()
     {
         Instance = this;
     }
 
+    // Ruleaza logica de spawn AI pentru inamici.
     private void Update()
     {
         // AI simplu pentru spawn inamici
@@ -36,14 +38,14 @@ public class UnitSpawner : MonoBehaviour
         {
             SpawnStrategicEnemyUnit();
 
-            // Slow, slightly randomized pacing (more room for strategy)
+            // Pacing lent, usor randomizat
             float interval = Mathf.Max(enemySpawnInterval, 5f);
             nextEnemySpawnTime = Time.time + Random.Range(interval * 0.9f, interval * 1.25f);
         }
     }
 
     /// <summary>
-    /// Spawn o unitate player (0, 1 sau 2)
+    /// Spawneaza o unitate player (0, 1 sau 2)
     /// </summary>
     public void SpawnPlayerUnit(int unitIndex)
     {
@@ -53,10 +55,10 @@ public class UnitSpawner : MonoBehaviour
             return;
         }
 
-        // Verifică cooldown
+        // Verifica cooldown
         if (Time.time - lastSpawnTime < spawnCooldown)
         {
-            Debug.Log("Spawn în cooldown!");
+            Debug.Log("Spawn in cooldown!");
             return;
         }
 
@@ -77,7 +79,7 @@ public class UnitSpawner : MonoBehaviour
     }
 
     /// <summary>
-    /// Spawn o unitate inamică (0, 1 sau 2)
+    /// Spawneaza o unitate inamica (0, 1 sau 2)
     /// </summary>
     public void SpawnEnemyUnit(int unitIndex)
     {
@@ -86,21 +88,12 @@ public class UnitSpawner : MonoBehaviour
         CreateUnitInstance(enemyPrefabs[unitIndex], Team.Enemy);
     }
 
-    /// <summary>
-    /// Spawn o unitate inamică aleatorie (pentru AI)
-    /// </summary>
-    public void SpawnRandomEnemyUnit()
-    {
-        if (enemyPrefabs.Length == 0) return;
-        int randomIndex = Random.Range(0, enemyPrefabs.Length);
-        SpawnEnemyUnit(randomIndex);
-    }
-
+    // Spawneaza o unitate inamica in functie de rol.
     private void SpawnStrategicEnemyUnit()
     {
         if (enemyPrefabs == null || enemyPrefabs.Length == 0) return;
 
-        // Simple wave pattern: Heavy -> Ranged -> Light -> Light (repeat)
+        // Pattern simplu: Heavy -> Ranged -> Light -> Light (repeat)
         EnemyRole desiredRole;
         switch (enemySpawnStep % 4)
         {
@@ -118,7 +111,7 @@ public class UnitSpawner : MonoBehaviour
         int index = FindEnemyPrefabIndex(desiredRole);
         if (index < 0)
         {
-            // Fallback: random if role not present in enemyPrefabs array.
+            // Fallback: random daca rolul nu exista
             index = Random.Range(0, enemyPrefabs.Length);
         }
 
@@ -128,6 +121,7 @@ public class UnitSpawner : MonoBehaviour
 
     private enum EnemyRole { Heavy, Light, Ranged }
 
+    // Cauta un prefab de inamic in functie de rol.
     private int FindEnemyPrefabIndex(EnemyRole role)
     {
         for (int i = 0; i < enemyPrefabs.Length; i++)
@@ -156,9 +150,10 @@ public class UnitSpawner : MonoBehaviour
         return -1;
     }
 
+    // Creeaza instanta de unitate si initializeaza echipa si HP bar.
     private void CreateUnitInstance(GameObject prefab, Team team)
     {
-        // Determină poziția de spawn în funcție de echipă
+        // Determina pozitia de spawn in functie de echipa
         Transform spawnPoint = (team == Team.Player) ? playerSpawnPoint : enemySpawnPoint;
         Vector3 spawnPos = new Vector3(spawnPoint.position.x, -4f, spawnPoint.position.z);
         
@@ -167,13 +162,13 @@ public class UnitSpawner : MonoBehaviour
         
         if (unit != null)
         {
-            unit.SetTeam(team); // Setează echipa și orientarea
+            unit.SetTeam(team); // Seteaza echipa si orientarea
 
-            // Preserve prefab identity for presets/UI/logs.
+            // Pastreaza identitatea prefabului pentru preseturi/UI/loguri
             unit.unitName = prefab.name;
             go.name = $"{prefab.name} ({team})";
             
-            // Creează bara de HP pentru această unitate
+            // Creeaza bara de HP pentru aceasta unitate
             if (HealthBarManager.Instance != null)
             {
                 HealthBarManager.Instance.CreateHealthBar(unit);
@@ -182,7 +177,7 @@ public class UnitSpawner : MonoBehaviour
     }
 
     /// <summary>
-    /// Metodă de compatibilitate pentru scripturile vechi
+    /// Metoda de compatibilitate pentru scripturile vechi
     /// </summary>
     public void SpawnUnit(int unitIndex, Team team)
     {
@@ -192,7 +187,7 @@ public class UnitSpawner : MonoBehaviour
             SpawnEnemyUnit(unitIndex);
     }
 
-    // Metode utile pentru UI
+    // Metoda utila pentru UI: cost unitate player.
     public int GetPlayerUnitCost(int index)
     {
         if (index >= 0 && index < playerPrefabs.Length)
@@ -202,6 +197,7 @@ public class UnitSpawner : MonoBehaviour
         return 0;
     }
 
+    // Metoda utila pentru UI: nume unitate player.
     public string GetPlayerUnitName(int index)
     {
         if (index >= 0 && index < playerPrefabs.Length)
@@ -211,6 +207,7 @@ public class UnitSpawner : MonoBehaviour
         return "Unknown";
     }
 
+    // Calculeaza costul pe baza numelui prefabului.
     private int GetCostForPrefab(GameObject prefab)
     {
         if (prefab == null) return 0;

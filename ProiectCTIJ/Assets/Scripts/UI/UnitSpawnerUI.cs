@@ -15,18 +15,19 @@ public class UnitSpawnerUI : MonoBehaviour
     
     private float lastSpawnTime = -999f;
 
+    // Initializeaza butoanele si textele UI pentru unitati.
     private void Start()
     {
-        // Conectează butoanele cu funcții de spawn
+        // Conecteaza butoanele cu functii de spawn
         for (int i = 0; i < unitButtons.Length; i++)
         {
-            int index = i; // Closure variable
+            int index = i; // Variabila pentru closure
             if (unitButtons[i] != null)
             {
                 unitButtons[i].onClick.AddListener(() => OnUnitButtonClicked(index));
             }
             
-            // Actualizează text-urile cu informații despre unitate
+            // Actualizeaza textele cu informatii despre unitate
             if (unitNameTexts[i] != null && UnitSpawner.Instance != null)
             {
                 unitNameTexts[i].text = UnitSpawner.Instance.GetPlayerUnitName(i);
@@ -38,9 +39,10 @@ public class UnitSpawnerUI : MonoBehaviour
         }
     }
 
+    // Afiseaza cooldown si seteaza interactiunea butoanelor.
     private void Update()
     {
-        // Afișează cooldown-ul
+        // Afiseaza cooldown-ul
         if (spawnCooldownText != null && UnitSpawner.Instance != null)
         {
             float timeSinceLastSpawn = Time.time - lastSpawnTime;
@@ -50,7 +52,7 @@ public class UnitSpawnerUI : MonoBehaviour
                 spawnCooldownText.text = $"Cooldown: {remainingTime:F1}s";
                 spawnCooldownText.gameObject.SetActive(true);
                 
-                // Dezactivează butoanele în cooldown
+                // Dezactiveaza butoanele in cooldown
                 foreach (Button btn in unitButtons)
                 {
                     if (btn != null) btn.interactable = false;
@@ -60,7 +62,7 @@ public class UnitSpawnerUI : MonoBehaviour
             {
                 spawnCooldownText.gameObject.SetActive(false);
                 
-                // Reactivează butoanele
+                // Reactiveaza butoanele
                 foreach (Button btn in unitButtons)
                 {
                     if (btn != null) btn.interactable = true;
@@ -69,6 +71,7 @@ public class UnitSpawnerUI : MonoBehaviour
         }
     }
 
+    // Handler pentru click pe butonul de unitate.
     private void OnUnitButtonClicked(int unitIndex)
     {
         if (UnitSpawner.Instance != null)
@@ -78,6 +81,7 @@ public class UnitSpawnerUI : MonoBehaviour
         }
     }
 
+    // Seteaza iconita pentru o unitate in UI.
     public void SetUnitIcon(int index, Sprite sprite)
     {
         if (index >= 0 && index < unitIcons.Length && unitIcons[index] != null)

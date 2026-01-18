@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// Bară de HP specială pentru baze - afișată fix pe ecran (Screen Space).
+/// Bara de HP speciala pentru baze - afisata fix pe ecran (Screen Space).
 /// </summary>
 public class BaseHealthBar : MonoBehaviour
 {
@@ -10,7 +10,7 @@ public class BaseHealthBar : MonoBehaviour
     public BaseUnit targetBase;
     public Image fillImage;
     public Image backgroundImage;
-    public TMPro.TextMeshProUGUI hpText;  // Opțional: afișează "1500 / 2000"
+    public TMPro.TextMeshProUGUI hpText;  // Optional: afiseaza "1500 / 2000"
     
     [Header("Colors")]
     public Color fullHealthColor = new Color(0.2f, 0.8f, 0.2f);
@@ -28,10 +28,11 @@ public class BaseHealthBar : MonoBehaviour
     
     private float lastHP;
     private float maxHP;
-    
+
+    // Initializeaza bara si cauta baza tinta.
     void Start()
     {
-        // Găsește baza automat dacă nu e setată
+        // Gaseste baza automat daca nu e setata
         if (targetBase == null)
         {
             FindTargetBase();
@@ -46,14 +47,15 @@ public class BaseHealthBar : MonoBehaviour
         
         UpdateBar();
     }
-    
+
+    // Cauta baza corecta in scena.
     void FindTargetBase()
     {
         BaseUnit[] bases = FindObjectsByType<BaseUnit>(FindObjectsSortMode.None);
         
         foreach (var b in bases)
         {
-            // Găsește baza corectă în funcție de isForPlayerBase
+            // Gaseste baza corecta in functie de isForPlayerBase
             if (b.isPlayerBase == isForPlayerBase)
             {
                 targetBase = b;
@@ -64,10 +66,11 @@ public class BaseHealthBar : MonoBehaviour
             }
         }
     }
-    
+
+    // Actualizeaza referinta la baza si UI-ul.
     void Update()
     {
-        // Re-try finding base if not set
+        // Reincearca gasirea bazei daca nu e setata
         if (targetBase == null)
         {
             FindTargetBase();
@@ -76,12 +79,13 @@ public class BaseHealthBar : MonoBehaviour
         
         UpdateBar();
     }
-    
+
+    // Actualizeaza vizual bara de HP.
     void UpdateBar()
     {
         if (targetBase == null || fillImage == null) return;
         
-        // Asigură-te că maxHP e setat corect
+        // Asigura-te ca maxHP e setat corect
         if (maxHP <= 0)
         {
             maxHP = targetBase.hp;
@@ -91,10 +95,10 @@ public class BaseHealthBar : MonoBehaviour
         float currentHealth = Mathf.Max(0f, targetBase.currentHP);
         float healthPercent = Mathf.Clamp01(currentHealth / maxHP);
         
-        // Smooth fill
+        // Fill smooth
         fillImage.fillAmount = Mathf.Lerp(fillImage.fillAmount, healthPercent, Time.deltaTime * 8f);
         
-        // Culoare în funcție de HP
+        // Culoare in functie de HP
         if (healthPercent > 0.6f)
         {
             fillImage.color = fullHealthColor;
@@ -112,7 +116,7 @@ public class BaseHealthBar : MonoBehaviour
             fillImage.color = criticalHealthColor;
         }
         
-        // Actualizează textul HP
+        // Actualizeaza textul HP
         if (hpText != null)
         {
             hpText.text = $"{Mathf.CeilToInt(currentHealth)} / {Mathf.CeilToInt(maxHP)}";

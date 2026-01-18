@@ -2,13 +2,13 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// Atașează acest script pe un GameObject gol în scenă.
-/// Va crea automat bare de HP pentru toate unitățile.
+/// Ataseaza acest script pe un GameObject gol in scena.
+/// Va crea automat bare de HP pentru toate unitatile.
 /// </summary>
 public class HealthBarManager : MonoBehaviour
 {
     [Header("Prefabs")]
-    [Tooltip("Prefab pentru bara de HP a unităților (World Space Canvas)")]
+    [Tooltip("Prefab pentru bara de HP a unitatilor (World Space Canvas)")]
     public GameObject unitHealthBarPrefab;
     
     [Header("Settings")]
@@ -16,13 +16,14 @@ public class HealthBarManager : MonoBehaviour
     public Vector3 unitBarScale = new Vector3(0.01f, 0.01f, 1f);
     
     [Header("Base Health Bar References")]
-    [Tooltip("Referință la bara de HP a bazei jucătorului (în UI)")]
+    [Tooltip("Referinta la bara de HP a bazei jucatorului (in UI)")]
     public BaseHealthBar playerBaseHealthBar;
-    [Tooltip("Referință la bara de HP a bazei inamice (în UI)")]
+    [Tooltip("Referinta la bara de HP a bazei inamice (in UI)")]
     public BaseHealthBar enemyBaseHealthBar;
     
     public static HealthBarManager Instance { get; private set; }
-    
+
+    // Initializeaza singletonul managerului.
     void Awake()
     {
         if (Instance == null)
@@ -34,13 +35,15 @@ public class HealthBarManager : MonoBehaviour
             Destroy(gameObject);
         }
     }
-    
+
+    // Initializeaza referintele pentru barele bazelor.
     void Start()
     {
-        // Găsește bazele și le atribuie barele de HP din UI
+        // Gaseste bazele si le atribuie barele de HP din UI
         AssignBaseBars();
     }
-    
+
+    // Asociaza barele de HP cu bazele din scena.
     void AssignBaseBars()
     {
         BaseUnit[] bases = FindObjectsByType<BaseUnit>(FindObjectsSortMode.None);
@@ -58,14 +61,14 @@ public class HealthBarManager : MonoBehaviour
     }
     
     /// <summary>
-    /// Creează o bară de HP pentru o unitate.
-    /// Apelează asta când spawn-ezi o unitate nouă.
+    /// Creeaza o bara de HP pentru o unitate.
+    /// Apeleaza asta cand spawnezi o unitate noua.
     /// </summary>
     public void CreateHealthBar(Unit unit)
     {
         if (unit == null || unitHealthBarPrefab == null) return;
         
-        // Nu crea bare pentru baze (au bara lor separată în UI)
+        // Nu crea bare pentru baze (au bara lor separata in UI)
         if (unit is BaseUnit) return;
         
         GameObject barObj = Instantiate(unitHealthBarPrefab, unit.transform);

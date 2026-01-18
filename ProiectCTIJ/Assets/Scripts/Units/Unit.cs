@@ -12,26 +12,26 @@ public class Unit : MonoBehaviour
     [Header("Attack Type")]
     public bool isRanged = false; // TRUE pentru Priest/Peasant(archer)
     public GameObject projectilePrefab; // Doar pentru ranged
-    [Tooltip("Offset local (x,y) față de pivot pentru a lansa proiectilul din mâna/arcul unității.")]
+    [Tooltip("Offset local (x,y) fata de pivot pentru a lansa proiectilul din mana/arcul unitatii.")]
     public Vector2 projectileSpawnOffset = new Vector2(0.1f, 0.45f);
 
     [Header("Projectile Spawn Safety")]
     [Tooltip("Scale-ul aplicat proiectilelor de tip unitate (skeleton etc). 0.5 = vizibil, 1.0 = mai mare.")]
     public float spawnedProjectileMaxWorldSize = 0.5f;
 
-    [Tooltip("Multiplicator aplicat peste spawnedProjectileMaxWorldSize (ex: Priest 10x). Se aplică doar pentru proiectile mari (skeleton/VFX) care sunt sanitizate în runtime, nu pentru săgeți normale.")]
+    [Tooltip("Multiplicator aplicat peste spawnedProjectileMaxWorldSize (ex: Priest 10x). Se aplica doar pentru proiectile mari (skeleton/VFX) care sunt sanitizate in runtime, nu pentru sageti normale.")]
     public float spawnedProjectileSizeMultiplier = 1f;
 
-    [Tooltip("Fallback scale dacă nu găsim niciun renderer pe proiectil.")]
+    [Tooltip("Fallback scale daca nu gasim niciun renderer pe proiectil.")]
     public float spawnedProjectileFallbackScale = 0.15f;
 
-    [Tooltip("Dezactivează coliziuni/rigidbody pe proiectilul instanțiat (recomandat pentru prefabs mari).")]
+    [Tooltip("Dezactiveaza coliziuni/rigidbody pe proiectilul instantiat (recomandat pentru prefabs mari).")]
     public bool spawnedProjectileDisablePhysics = true;
 
-    [Tooltip("Dezactivează scripturi de tip Unit/BaseUnit pe proiectil (dacă ai pus din greșeală un prefab de unitate ca proiectil).")]
+    [Tooltip("Dezactiveaza scripturi de tip Unit/BaseUnit pe proiectil (daca ai pus din greseala un prefab de unitate ca proiectil).")]
     public bool spawnedProjectileDisableUnitBehaviours = true;
 
-    [Tooltip("Dezactivează Animator pe proiectilul instanțiat. Pentru VFX animate (ex: cap de schelet), lasă FALSE.")]
+    [Tooltip("Dezactiveaza Animator pe proiectilul instantiat. Pentru VFX animate (ex: cap de schelet), lasa FALSE.")]
     public bool spawnedProjectileDisableAnimator = false;
     
     [Header("Stats")]
@@ -57,17 +57,18 @@ public class Unit : MonoBehaviour
     private float currentTargetDistance = float.MaxValue;
     private float currentTargetEdgeDistance = float.MaxValue;
 
-    // Ranged: spawn projectile from animation event (so arrow releases on the right frame)
+    // Ranged: spawn proiectil din event de animatie
     private bool pendingRangedShot;
     private Unit pendingRangedTarget;
     private float pendingRangedDamage;
     private float pendingRangedFireTime;
 
-    // Small gap to keep between allies so physics never starts pushing.
+    // Mic spatiu intre aliati ca sa nu se impinga prin fizica.
     private const float AllyQueueGap = 0.18f;
 
     private readonly HashSet<Collider2D> ignoredAllyColliders = new HashSet<Collider2D>();
 
+    // Permite aliatilor sa treaca prin aceasta unitate ranged cand ataca.
     public bool AllowsAlliesToPassThrough()
     {
         if (!isRanged) return false;
@@ -75,19 +76,20 @@ public class Unit : MonoBehaviour
         return currentTargetEdgeDistance <= attackRange + 0.15f;
     }
 
+    // Initializeaza componentele si setarile unitatii.
     protected virtual void Start()
     {
         animator = GetComponent<Animator>();
         mainCollider = GetComponent<Collider2D>();
         
-        // DEZACTIVEAZĂ ROOT MOTION - altfel animațiile mișcă unitățile pe Y!
+        // DEZACTIVEAZA ROOT MOTION - altfel animatiile misca unitatile pe Y
         if (animator != null)
         {
             animator.applyRootMotion = false;
 
             hasCastTrigger = HasAnimatorParameter(animator, "cast");
 
-            // Safety: ensure we don't spawn in a stale/true trigger state.
+            // Asigura ca nu raman triggere vechi active.
             try
             {
                 animator.ResetTrigger("attack");
@@ -100,8 +102,8 @@ public class Unit : MonoBehaviour
             catch { }
         }
 
-        // Apply simple role presets based on prefab/name so the gameplay is readable and strategic.
-        // (Skip bases; they override hp/stats in BaseUnit)
+        // Aplica preseturi simple pe baza numelui prefabului.
+        // (Sare peste baze; ele isi suprascriu stats in BaseUnit)
         if (GetComponent<BaseUnit>() == null)
         {
             ApplyRolePreset();
@@ -109,19 +111,20 @@ public class Unit : MonoBehaviour
 
         currentHP = hp;
         
-        // Asigură-te că Rigidbody2D este setat corect
+        // Asigura-te ca Rigidbody2D este setat corect
         Rigidbody2D rb = GetComponent<Rigidbody2D>();
         if (rb != null)
         {
             rb.bodyType = RigidbodyType2D.Dynamic;
-            rb.gravityScale = 0f; // Dezactivează gravitatea
-            rb.constraints = RigidbodyConstraints2D.FreezeRotation | RigidbodyConstraints2D.FreezePositionY; // Nu roti și nu te miști pe Y
+            rb.gravityScale = 0f; // Dezactiveaza gravitatea
+            rb.constraints = RigidbodyConstraints2D.FreezeRotation | RigidbodyConstraints2D.FreezePositionY; // Nu roti si nu te misti pe Y
         }
     }
 
+    // Aplica preseturi de rol in functie de nume.
     private void ApplyRolePreset()
     {
-        // After spawn, the object name may become "<Name> (Team)"; normalize it.
+        // Dupa spawn, numele poate deveni "<Name> (Team)"; normalizam.
         string rawName = !string.IsNullOrWhiteSpace(unitName) && unitName != "Unit" ? unitName : gameObject.name;
         string nameOnly = rawName;
         int parenIndex = nameOnly.IndexOf(" (", StringComparison.Ordinal);
@@ -136,7 +139,7 @@ public class Unit : MonoBehaviour
         float presetAttackRate = attackRate;
         bool presetIsRanged = isRanged;
 
-        // Roles requested: Soldier (heavy), Thief (fast/low dmg), Priest (ranged mid dmg / low hp)
+        // Roluri: Soldier (heavy), Thief (fast/low dmg), Priest (ranged mid dmg / low hp)
         if (nameOnly.Contains("Soldier", StringComparison.OrdinalIgnoreCase) ||
             nameOnly.Contains("Knight", StringComparison.OrdinalIgnoreCase) ||
             nameOnly.Contains("Merchant", StringComparison.OrdinalIgnoreCase))
@@ -167,7 +170,7 @@ public class Unit : MonoBehaviour
         }
         else if (nameOnly.Contains("Peasant", StringComparison.OrdinalIgnoreCase))
         {
-            // Archer (ranged). Needs projectilePrefab on the prefab.
+            // Archer (ranged). Are nevoie de projectilePrefab pe prefab.
             presetHp = 75f;
             presetDamage = 6.4f;   // -20% damage
             presetSpeed = 2.2f;
@@ -177,7 +180,7 @@ public class Unit : MonoBehaviour
 
             if (!presetIsRanged)
             {
-                // If no projectile is set, fall back to a light melee so it still functions.
+                // Daca nu exista proiectil, revine la melee light.
                 presetHp = 110f;
                 presetDamage = 7f;
                 presetSpeed = 2.8f;
@@ -200,7 +203,7 @@ public class Unit : MonoBehaviour
             presetAttackRate = 1.1f;
             presetIsRanged = true;
 
-            // User request: make Priest projectiles much bigger (only affects unit-like/VFX projectile prefabs).
+            // Cerinta: proiectile Priest mai mari (doar pentru prefabs tip unit/VFX)
             spawnedProjectileSizeMultiplier = 10f;
 
             cost = 30;
@@ -214,18 +217,19 @@ public class Unit : MonoBehaviour
         attackRate = presetAttackRate;
         isRanged = presetIsRanged;
 
-        // Keep unitName consistent for logging/UI.
+        // Pastreaza unitName consistent pentru log/UI.
         if (unitName == "Unit")
             unitName = nameOnly;
     }
 
+    // Update pentru logica unitatii.
     protected virtual void Update()
     {
         if (currentHP <= 0) return;
 
         RefreshAllyPassThrough();
 
-        // If the casting animation event is missing/misconfigured, still fire after a short delay.
+        // Daca eventul de animatie lipseste, trage dupa un delay.
         if (pendingRangedShot && Time.time >= pendingRangedFireTime)
         {
             FireRangedProjectile();
@@ -234,7 +238,7 @@ public class Unit : MonoBehaviour
         DetectEnemy();
 
         bool hasTarget = (currentTarget != null && currentTarget.currentHP > 0);
-        // Treat attackRange as edge-to-edge distance (not center-to-center)
+        // Trateaza attackRange ca distanta edge-to-edge
         bool inAttackRange = hasTarget && (currentTargetEdgeDistance <= attackRange + 0.02f);
 
         if (inAttackRange)
@@ -243,11 +247,12 @@ public class Unit : MonoBehaviour
             Move();
     }
 
+    // Deplaseaza unitatea spre inamici.
     void Move()
     {
         float direction = (team == Team.Player) ? 1f : -1f;
 
-        // Queue behind allies so they don't collide/push each other.
+        // Sta in spatele aliatilor ca sa nu se impinga
         if (IsAllyBlockingInFront(direction))
         {
             Rigidbody2D rbStop = GetComponent<Rigidbody2D>();
@@ -266,11 +271,11 @@ public class Unit : MonoBehaviour
             return;
         }
         
-        // Folosim Rigidbody2D pentru mișcare mai bună
+        // Folosim Rigidbody2D pentru miscare mai buna
         Rigidbody2D rb = GetComponent<Rigidbody2D>();
         if (rb != null)
         {
-            // Mișcare doar pe X, Y rămâne fix la 0
+            // Miscare doar pe X, Y ramane fix la 0
             rb.linearVelocity = new Vector2(direction * speed, 0f);
         }
         else
@@ -289,10 +294,11 @@ public class Unit : MonoBehaviour
         }
     }
 
+    // Detecteaza cel mai apropiat inamic in fata.
     void DetectEnemy()
     {
-        // Pentru detectarea țintelor, folosim un range mai mare (baza poate fi mai sus pe Y)
-        float detectionRange = Mathf.Max(attackRange, 6f); // minim 6 ca să prindă și bazele
+        // Pentru detectarea tintelor, folosim un range mai mare (baza poate fi mai sus pe Y)
+        float detectionRange = Mathf.Max(attackRange, 6f); // minim 6 ca sa prinda si bazele
         Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, detectionRange);
         
         currentTarget = null;
@@ -307,18 +313,18 @@ public class Unit : MonoBehaviour
             if (hit.gameObject == this.gameObject) continue;
             
             // IMPORTANT: multe prefab-uri au collider pe child, iar scriptul Unit pe parent.
-            // Dacă folosim doar GetComponent<Unit>(), unitățile nu detectează baza/ținta.
+            // Daca folosim doar GetComponent<Unit>(), unitatile nu detecteaza baza/tinta.
             Unit targetUnit = hit.GetComponentInParent<Unit>();
             if (targetUnit != null && targetUnit.team != this.team && targetUnit.currentHP > 0)
             {
                 float distance = Mathf.Abs(targetUnit.transform.position.x - transform.position.x);
 
-                // Nu targeta lucruri "în spate" (previne comportamente ciudate când se suprapun / trec unul de altul)
+                // Nu targeta lucruri "in spate" (previne comportamente ciudate cand se suprapun / trec unul de altul)
                 float deltaX = targetUnit.transform.position.x - transform.position.x;
                 if (Mathf.Sign(deltaX) != Mathf.Sign(direction) && Mathf.Abs(deltaX) > 0.01f)
                     continue;
                 
-                // Verifică că inamicul este într-adevăr în range
+                // Verifica ca inamicul este intr-adevar in range
                 if (distance <= detectionRange + 0.2f && distance < closestDistance)
                 {
                     closestDistance = distance;
@@ -329,21 +335,22 @@ public class Unit : MonoBehaviour
             }
         }
 
-        // Debug pentru a vedea ce detectează
+        // Debug pentru a vedea ce detecteaza
         if (currentTarget != null)
         {
             Debug.DrawLine(transform.position, currentTarget.transform.position, Color.red);
         }
     }
 
+    // Ataca tinta curenta.
     void Attack()
     {
         if (currentTarget == null || currentTarget.currentHP <= 0) return;
 
-        // Dacă ținta nu e încă în range, continuă să mergi (nu ataca de la distanță la melee)
+        // Daca tinta nu e inca in range, continua sa mergi
         if (currentTargetEdgeDistance > attackRange + 0.02f) return;
         
-        // Oprește mișcarea când atacă
+        // Opreste miscarea cand ataca
         Rigidbody2D rb = GetComponent<Rigidbody2D>();
         if (rb != null)
         {
@@ -355,7 +362,7 @@ public class Unit : MonoBehaviour
             try
             {
                 animator.SetBool("isWalking", false);
-                // For ranged, prefer casting animation via trigger; don't force melee attack state.
+                // Pentru ranged, folosim trigger de cast; nu fortam melee.
                 animator.SetBool("isAttacking", !isRanged);
             }
             catch { }
@@ -367,7 +374,7 @@ public class Unit : MonoBehaviour
             
             if (isRanged && projectilePrefab != null)
             {
-                // RANGED ATTACK - launch projectile from animation event (casting)
+                // RANGED ATTACK - lanseaza proiectil din event de animatie
                 pendingRangedShot = true;
                 pendingRangedTarget = currentTarget;
                 pendingRangedDamage = damage;
@@ -381,13 +388,13 @@ public class Unit : MonoBehaviour
             
             if (animator != null && animator.isActiveAndEnabled)
             {
-                // Pentru toate unitățile (ranged sau melee), folosim trigger "attack"
-                // "cast" era doar pentru vrăjitori cu animație separată de casting
+                // Pentru toate unitatile (ranged sau melee), folosim trigger "attack"
+                // "cast" era doar pentru vrajitori cu animatie separata
                 try { animator.SetTrigger("attack"); } catch { }
             }
             else
             {
-                // No animator: fire immediately for ranged.
+                // Fara animator: trage imediat pentru ranged.
                 if (isRanged && projectilePrefab != null)
                     FireRangedProjectile();
             }
@@ -396,8 +403,7 @@ public class Unit : MonoBehaviour
         }
     }
 
-    // Hook this from the casting animation clip using an Animation Event.
-    // Event name: FireRangedProjectile
+    // Foloseste Animation Event din clipul de cast: FireRangedProjectile
     public void FireRangedProjectile()
     {
         if (!pendingRangedShot) return;
@@ -406,7 +412,7 @@ public class Unit : MonoBehaviour
         if (projectilePrefab == null) return;
         if (pendingRangedTarget == null || pendingRangedTarget.currentHP <= 0) return;
 
-        // Dacă ținta a ieșit din range până la momentul lansării (animation event / fallback timer), anulăm shot-ul.
+        // Daca tinta a iesit din range pana la momentul lansarii, anulam shot-ul.
         float centerDistance = Mathf.Abs(pendingRangedTarget.transform.position.x - transform.position.x);
         float edgeDistanceNow = GetEdgeDistanceTo(pendingRangedTarget, centerDistance);
         if (edgeDistanceNow > attackRange + 0.15f)
@@ -417,31 +423,31 @@ public class Unit : MonoBehaviour
 
         Debug.Log($"{gameObject.name} fires projectile at {pendingRangedTarget.gameObject.name} (dist {(pendingRangedTarget.transform.position - transform.position).magnitude:F2})");
 
-        // Spawn lângă arc, nu din picioare. Offset-ul pe X respectă direcția echipei.
+        // Spawn langa arc, nu din picioare. Offset-ul pe X respecta directia echipei.
         float dirSign = (team == Team.Player) ? 1f : -1f;
 
-        // Ridică spawn-ul în funcție de collider-ul unității ca să nu pornească din picioare.
+        // Ridica spawn-ul in functie de collider ca sa nu porneasca din picioare.
         float colliderHeight = 0f;
         Collider2D selfCol = GetComponent<Collider2D>();
         if (selfCol != null)
-            colliderHeight = selfCol.bounds.extents.y; // jumătate din înălțimea collider-ului
+            colliderHeight = selfCol.bounds.extents.y; // jumatate din inaltimea collider-ului
 
         Vector3 spawnPos = transform.position + new Vector3(projectileSpawnOffset.x * dirSign, colliderHeight + projectileSpawnOffset.y, 0f);
 
         GameObject proj = Instantiate(projectilePrefab, spawnPos, Quaternion.identity);
         
-        // FORȚĂM SCALE-UL PENTRU PRIEST (sau orice unitate care are spawnedProjectileMaxWorldSize != default)
-        // Verificăm dacă unitatea e Priest sau dacă user-ul a setat un scale custom
+        // FORTAM SCALE-UL PENTRU PRIEST (sau orice unitate care are spawnedProjectileMaxWorldSize != default)
+        // Verificam daca unitatea e Priest sau daca user-ul a setat un scale custom
         bool isPriest = unitName.Contains("Priest", StringComparison.OrdinalIgnoreCase) || 
                         gameObject.name.Contains("Priest", StringComparison.OrdinalIgnoreCase);
         
         if (isPriest)
         {
-            // Dezactivează TOT ce ar putea face prefab-ul să se comporte ca unitate
+            // Dezactiveaza TOT ce ar putea face prefab-ul sa se comporte ca unitate
             foreach (var c in proj.GetComponentsInChildren<MonoBehaviour>(true))
             {
                 if (c == null) continue;
-                if (c is Projectile) continue; // Păstrează scriptul Projectile
+                if (c is Projectile) continue; // Pastreaza scriptul Projectile
                 c.enabled = false;
             }
             foreach (var col in proj.GetComponentsInChildren<Collider2D>(true))
@@ -460,14 +466,14 @@ public class Unit : MonoBehaviour
         }
         else
         {
-            // Pentru alte unități (archer etc), nu modificăm scale-ul
+            // Pentru alte unitati (archer etc), nu modificam scale-ul
             ConfigureSpawnedProjectile(proj);
         }
         
         Projectile projectile = proj.GetComponent<Projectile>();
         if (projectile == null)
         {
-            // Make it robust: even if the prefab is just a visual (sprite/VFX), add behaviour at runtime.
+            // Daca prefab-ul e doar visual, adauga comportament runtime.
             projectile = proj.AddComponent<Projectile>();
             Debug.LogWarning($"{gameObject.name} spawned projectile prefab without Projectile component; added it at runtime: {proj.name}");
         }
@@ -475,19 +481,20 @@ public class Unit : MonoBehaviour
         projectile.Initialize(pendingRangedTarget, (int)pendingRangedDamage, team);
     }
 
+    // Configureaza proiectilul daca prefab-ul seamana cu o unitate.
     private void ConfigureSpawnedProjectile(GameObject proj)
     {
         if (proj == null) return;
 
-        // Verifică dacă prefab-ul e un "unit prefab" (are Unit/BaseUnit/Animator) - adică skeleton etc.
+        // Verifica daca prefab-ul e un "unit prefab" (are Unit/BaseUnit/Animator)
         bool hasUnitScript = (proj.GetComponentInChildren<Unit>(true) != null) || (proj.GetComponentInChildren<BaseUnit>(true) != null);
         bool hasAnimator = (proj.GetComponentInChildren<Animator>(true) != null);
         
-        // Dacă nu e un prefab de tip unitate, nu face nimic (săgețile rămân cum sunt)
+        // Daca nu e un prefab de tip unitate, nu face nimic (sagetile raman cum sunt)
         if (!hasUnitScript && !hasAnimator)
             return;
 
-        // Dezactivează AI-ul și physics pe proiectil (ca să nu se comporte ca o unitate)
+        // Dezactiveaza AI-ul si physics pe proiectil (sa nu se comporte ca o unitate)
         Unit[] units = proj.GetComponentsInChildren<Unit>(true);
         foreach (var u in units) if (u != null) u.enabled = false;
         
@@ -505,23 +512,24 @@ public class Unit : MonoBehaviour
             rb.simulated = false; 
         }
 
-        // Oprește root motion (ca să nu miște proiectilul pe cont propriu)
+        // Opreste root motion (sa nu miste proiectilul singur)
         Animator[] anims = proj.GetComponentsInChildren<Animator>(true);
         foreach (var a in anims) if (a != null) a.applyRootMotion = false;
 
         // SCALE FIX: pune scale-ul direct la 0.5 (vizibil, nu gigant, nu microscopic)
-        // Poți ajusta din Inspector pe Unit -> spawnedProjectileMaxWorldSize
+        // Poti ajusta din Inspector pe Unit -> spawnedProjectileMaxWorldSize
         float scale = spawnedProjectileMaxWorldSize;
         proj.transform.localScale = new Vector3(scale, scale, 1f);
     }
 
+    // Verifica daca un aliat blocheaza in fata.
     private bool IsAllyBlockingInFront(float direction)
     {
-        // If we have an enemy in front and we are close enough to attack, don't queue-stop.
+        // Daca avem inamic in fata si suntem in range, nu ne oprim in coada.
         if (currentTarget != null && currentTarget.currentHP > 0 && currentTargetEdgeDistance <= attackRange + 0.02f)
             return false;
 
-        // If we're targeting a base, allow stacking to maximize damage.
+        // Daca tintim o baza, permitem stacking pentru damage maxim.
         if (currentTarget is BaseUnit)
             return false;
 
@@ -539,14 +547,14 @@ public class Unit : MonoBehaviour
             Unit other = hit.GetComponent<Unit>();
             if (other == null || other.currentHP <= 0) continue;
 
-            // Allow passing through allied ranged units that are actively attacking.
+            // Permite trecerea prin ranged aliat care ataca.
             if (other.team == this.team && other.AllowsAlliesToPassThrough())
                 continue;
 
-            // Only queue behind allies.
+            // Doar coada in spatele aliatilor.
             if (other.team != this.team) continue;
 
-            // Must be in front.
+            // Trebuie sa fie in fata.
             float deltaX = other.transform.position.x - transform.position.x;
             if (Mathf.Sign(deltaX) != Mathf.Sign(direction) && Mathf.Abs(deltaX) > 0.01f)
                 continue;
@@ -560,6 +568,7 @@ public class Unit : MonoBehaviour
         return false;
     }
 
+    // Gestioneaza ignorarea coliziunilor intre aliati in anumite cazuri.
     private void RefreshAllyPassThrough()
     {
         if (mainCollider == null) return;
@@ -607,6 +616,7 @@ public class Unit : MonoBehaviour
             ignoredAllyColliders.Remove(col);
     }
 
+    // Calculeaza distanta edge-to-edge dintre doua unitati.
     private float GetEdgeDistanceTo(Unit other, float centerDistance)
     {
         float myRadius = GetHorizontalRadius(this);
@@ -614,6 +624,7 @@ public class Unit : MonoBehaviour
         return centerDistance - (myRadius + otherRadius);
     }
 
+    // Calculeaza raza orizontala pe baza collider-ului.
     private static float GetHorizontalRadius(Unit unit)
     {
         if (unit == null) return 0.1f;
@@ -622,6 +633,7 @@ public class Unit : MonoBehaviour
         return Mathf.Max(0.05f, col.bounds.extents.x);
     }
 
+    // Primeste damage si verifica moartea.
     public virtual void TakeDamage(float amount)
     {
         currentHP -= amount;
@@ -640,6 +652,7 @@ public class Unit : MonoBehaviour
         }
     }
 
+    // Seteaza echipa si orientarea sprite-ului.
     public virtual void SetTeam(Team newTeam)
     {
         team = newTeam;
@@ -656,6 +669,7 @@ public class Unit : MonoBehaviour
         }
     }
 
+    // Proceseaza moartea unitatii.
     void Die()
     {
         Debug.Log(gameObject.name + " a murit.");
@@ -679,6 +693,7 @@ public class Unit : MonoBehaviour
         Destroy(gameObject, 0.5f);
     }
 
+    // Verifica daca animatorul are un parametru.
     private static bool HasAnimatorParameter(Animator anim, string name)
     {
         if (anim == null || string.IsNullOrEmpty(name)) return false;

@@ -2,14 +2,14 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// Bară de HP care urmărește o unitate.
-/// Atașează pe un Canvas World Space cu un Image (fill) pentru viață.
+/// Bara de HP care urmareste o unitate.
+/// Ataseaza pe un Canvas World Space cu un Image (fill) pentru viata.
 /// </summary>
 public class HealthBar : MonoBehaviour
 {
     [Header("References")]
     public Image fillImage;           // Imaginea care se umple (slider)
-    public Image backgroundImage;     // Fundal (opțional)
+    public Image backgroundImage;     // Fundal (optional)
     
     [Header("Colors")]
     public Color fullHealthColor = Color.green;
@@ -17,20 +17,21 @@ public class HealthBar : MonoBehaviour
     public Color lowHealthColor = Color.red;
     
     [Header("Settings")]
-    public Vector3 offset = new Vector3(0f, 1.2f, 0f);  // Offset deasupra unității
-    public bool hideWhenFull = true;  // Ascunde bara când HP e plin
+    public Vector3 offset = new Vector3(0f, 1.2f, 0f);  // Offset deasupra unitatii
+    public bool hideWhenFull = true;  // Ascunde bara cand HP e plin
     
     private Unit targetUnit;
     private Transform targetTransform;
     private Camera mainCamera;
-    private float maxHP;  // HP maxim salvat când se setează ținta
+    private float maxHP;  // HP maxim salvat cand se seteaza tinta
     private bool maxHPInitialized = false;
-    
+
+    // Initializeaza referintele pentru bara.
     void Start()
     {
         mainCamera = Camera.main;
         
-        // Încearcă să găsească unitatea părinte
+        // Incearca sa gaseasca unitatea parinte
         if (targetUnit == null)
         {
             targetUnit = GetComponentInParent<Unit>();
@@ -40,9 +41,10 @@ public class HealthBar : MonoBehaviour
             }
         }
         
-        // NU setăm maxHP aici - așteptăm primul Update când currentHP e deja setat corect
+        // NU setam maxHP aici - asteptam primul Update cand currentHP e deja setat corect
     }
-    
+
+    // Actualizeaza pozitia si afisajul barei.
     void LateUpdate()
     {
         if (targetUnit == null || targetTransform == null)
@@ -51,10 +53,10 @@ public class HealthBar : MonoBehaviour
             return;
         }
         
-        // Poziționează bara deasupra unității
+        // Pozitioneaza bara deasupra unitatii
         transform.position = targetTransform.position + offset;
         
-        // Face bara să fie mereu orientată spre cameră (billboard)
+        // Face bara sa fie orientata spre camera (billboard)
         if (mainCamera != null)
         {
             transform.rotation = mainCamera.transform.rotation;
@@ -62,30 +64,31 @@ public class HealthBar : MonoBehaviour
         
         UpdateBar();
     }
-    
+
+    // Actualizeaza umplerea si culorile barei.
     void UpdateBar()
     {
         if (targetUnit == null || fillImage == null) return;
         
-        // Inițializează maxHP o singură dată, când currentHP e deja setat (după ApplyRolePreset)
+        // Initializeaza maxHP o singura data, cand currentHP e deja setat (dupa ApplyRolePreset)
         if (!maxHPInitialized && targetUnit.currentHP > 0)
         {
             maxHP = targetUnit.currentHP;  // La start, currentHP == maxHP
             maxHPInitialized = true;
-            fillImage.fillAmount = 1f;  // Forțează bara plină
+            fillImage.fillAmount = 1f;  // Forteaza bara plina
             return;
         }
         
-        if (maxHP <= 0) return;  // Încă nu e inițializat
+        if (maxHP <= 0) return;  // Inca nu e initializat
         
-        // Calculează procentul corect
+        // Calculeaza procentul corect
         float currentHealth = Mathf.Max(0f, targetUnit.currentHP);
         float healthPercent = Mathf.Clamp01(currentHealth / maxHP);
         
-        // Actualizează fill amount DIRECT (fără smooth pentru precizie)
+        // Actualizeaza fill amount DIRECT (fara smooth pentru precizie)
         fillImage.fillAmount = healthPercent;
         
-        // Schimbă culoarea în funcție de HP
+        // Schimba culoarea in functie de HP
         if (healthPercent > 0.6f)
         {
             fillImage.color = fullHealthColor;
@@ -99,7 +102,7 @@ public class HealthBar : MonoBehaviour
             fillImage.color = lowHealthColor;
         }
         
-        // Ascunde când e plin (opțional)
+        // Ascunde cand e plin (optional)
         if (hideWhenFull)
         {
             bool shouldShow = healthPercent < 0.99f;
@@ -113,7 +116,7 @@ public class HealthBar : MonoBehaviour
     }
     
     /// <summary>
-    /// Setează unitatea țintă pentru această bară de HP.
+    /// Seteaza unitatea tinta pentru aceasta bara de HP.
     /// </summary>
     public void SetTarget(Unit unit)
     {
