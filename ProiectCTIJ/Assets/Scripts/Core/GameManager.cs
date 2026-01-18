@@ -1,6 +1,5 @@
 using UnityEngine;
 using System;
-using System.Collections.Generic;
 
 public class GameManager : MonoBehaviour
 {
@@ -8,8 +7,6 @@ public class GameManager : MonoBehaviour
 
     [Header("Economy")]
     public float currentGold = 100f;
-    public float currentXP = 0f;
-    public int currentTier = 1;
     public float goldPerSecond = 3f;
 
     [Header("Game State")]
@@ -17,8 +14,6 @@ public class GameManager : MonoBehaviour
     public bool isPaused = false;
 
     public event Action OnGoldChanged;
-    public event Action OnXPChanged;
-    public event Action OnTierChanged;
     public event Action<bool> OnGameOver;
 
     private void Awake()
@@ -55,32 +50,6 @@ public class GameManager : MonoBehaviour
         currentGold += reward;
         Debug.Log($"+{reward} aur pentru uciderea inamicului! Total: {currentGold}");
         OnGoldChanged?.Invoke();
-        
-        // Opțional: adaugă și XP
-        UpdateXP(reward * 0.5f);
-    }
-
-    public void UpdateXP(float amount)
-    {
-        currentXP += amount;
-        CheckTierUpgrade();
-        OnXPChanged?.Invoke();
-    }
-
-    private void CheckTierUpgrade()
-    {
-        // Simple tier logic based on the pitch
-        if (currentTier == 1 && currentXP >= 50) UpgradeTier();
-        else if (currentTier == 2 && currentXP >= 125) UpgradeTier();
-        else if (currentTier == 3 && currentXP >= 250) UpgradeTier();
-    }
-
-    private void UpgradeTier()
-    {
-        currentTier++;
-        goldPerSecond = 3f + 0.25f * (currentTier - 1);
-        OnTierChanged?.Invoke();
-        Debug.Log($"Reached Tech Tier {currentTier}!");
     }
 
     public void EndGame(bool playerWon)

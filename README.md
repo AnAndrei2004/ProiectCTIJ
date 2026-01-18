@@ -1,172 +1,95 @@
-# 🏰 AGE OF LANES — Unity 2D Game
+# ProiectCTIJ — Unity 2D Lane Battler (MVP)
 
-Un joc 2D de tip **lane battler**, inspirat din *Age of War 2*: două baze (stânga/dreapta), trimiți minioni care se luptă automat, câștigi aur și XP, faci upgrade la unități și bază.  
-Scopul: distruge baza inamică înainte să cadă a ta.
-
----
-
-## 🎮 Pitch rapid
-- **Gen:** Send-minions / Lane battler  
-- **Engine:** Unity **2022.3 LTS**, Template **2D (URP optional)**  
-- **Platformă:** PC (Windows, 16:9, 1080p)  
-- **Echipă:** 3 developeri, obiectiv MVP în ~40h
+Proiect Unity 2D tip **lane battler** (o singură bandă). Jucătorul și AI-ul trimit unități care se luptă automat între două baze. Scopul este distrugerea bazei inamice.
 
 ---
 
-## 🧠 Game Loop
-1. Primești **aur/sec** și **bounty** la kill.  
-2. Cheltui aur pentru a **spawna unități** (1/2/3).  
-3. Unitățile se mișcă automat și atacă inamicii.  
-4. Primești **XP** și faci **upgrade-uri** la unități și bază.  
-5. Distrugi baza inamică pentru a câștiga meciul.
+## ✅ Ce este implementat în acest moment
+
+### Gameplay de bază
+- Spawn unități jucător și inamic pe o singură bandă.
+- Unitățile se deplasează automat, detectează ținte și atacă (melee sau ranged).
+- Țintire în față, distanță calculată corect (edge-to-edge), cu stop la contact.
+- Ranged cu proiectile și protecție anti-tunneling.
+
+### Economie și progresie
+- Aur pasiv: **3 aur/sec** (fix).
+- Gold pentru kill (în funcție de unitate).
+
+### Unități (preseturi din prefab/name)
+- **Heavy:** Soldier / Knight / Merchant (HP mare, damage mare).
+- **Light:** Thief (rapid, damage mic).
+- **Ranged:** Peasant (ranged dacă are proiectil setat) și Priest (ranged).
+
+### Baze
+- Baze cu **300 HP** fiecare.
+- Efect de foc sub 50% HP și explozie la distrugere.
+- Jocul se termină la distrugerea unei baze.
+
+### UI & UX
+- HUD cu **Gold**.
+- Bare de HP pentru unități (World Space) + bare dedicate pentru baze.
+- UI pentru spawn unități cu cooldown vizual.
+- Pauză (ESC).
+
+### AI
+- Spawn periodic de inamici cu pattern simplu (Heavy → Ranged → Light → Light).
+- Există și un script alternativ de AI cu buget, dacă e folosit în scenă.
+
+### Cameră
+- Scroll pe X când mouse-ul e aproape de margini.
 
 ---
 
-## ⚔️ Reguli principale
-- Două baze cu **HP** (ex: 2000).  
-- Fiecare bază are un **turret** auto-fire.  
-- **O singură bandă** (MVP).  
-- **AI adversar** care scalează în dificultate.  
-- Unitățile se opresc la contact (melee lock).  
-- Targetare: cel mai apropiat inamic din față.
+## ✅ Taskuri implementate (15)
+1. Inițializare proiect Unity 2D (URP) și structură de bază.
+2. Configurare .gitignore pentru proiect Unity.
+3. Scenă de meniu cu buton Play (încărcare scenă joc).
+4. Sistem de spawn unități pentru player și enemy.
+5. UI pentru spawn unități (butoane + costuri/cooldown).
+6. Mișcare + targetare + atac melee pentru unități.
+7. Atac ranged cu proiectile (inclusiv anti-tunneling).
+8. Fix proiectil pentru Priest.
+9. Bare de HP pentru unități (world space).
+10. Baze funcționale (BaseUnit) cu HP și end game.
+11. Efecte vizuale de foc și explozie la bază.
+12. HUD pentru gold.
+13. AI simplu pentru spawn inamici (pattern).
+14. Cameră cu scroll pe margini (follow cursor).
+15. Fixuri diverse: animații, culori inamici, materiale/prefaburi.
 
 ---
 
-## 💰 Economie & Progresie
-- **Aur (AUR):** spawn unități, income pasiv + bounty.  
-- **XP:** pentru Tech Tier și Upgrade-uri.  
-- **Formule recomandate:**
-	- `AUR/sec = 3 + 0.25 * (TechTier - 1)`
-	- **Bounty:** 3–8 AUR / kill  
-	- **XP/kill:** 1–3 XP  
-	- **TierUp:** 50 / 125 / 250 XP
+## 🎮 Controale
+- **1 / 2 / 3** — Spawn unități (player)
+- **Q** — Rally (placeholder: log)
+- **U** — Toggle upgrade panel (placeholder: log)
+- **ESC** — Pauză
 
 ---
 
-## 🧱 Unități MVP
-
-| Tip      | Cost | HP  | DMG | Rate  | Viteză | Range | Rol               |
-|----------|------|-----|-----|-------|--------|-------|-------------------|
-| Soldat   | 25   | 90  | 10  | 1.0s  | 60     | 40    | ieftin, frontline |
-| Tanc     | 60   | 240 | 16  | 1.2s  | 45     | 40    | tank, rezistent   |
-| Arcaș    | 45   | 70  | 8   | 0.8s  | 60     | 200   | dps la distanță   |
-
-**Scaling pe Tech Tier:** +10% HP & +10% DMG per tier.
-
----
-
-## ⬆️ Upgrade-uri
-- **Tech Tier I → III**: scaling global.  
-- **Bază:**
-	- HP +20% / tier
-	- Turret DMG +10% / AtkRate -10%
-- **Globale:**
-	- *Infantry Training* – +10% HP unități  
-	- *Sharp Blades* – +10% DMG unități  
-	- *Logistics* – +10% AUR/sec  
-
----
-
-## 🔥 Abilități
-- **Q – Rally:** +20% Attack Rate 6s (CD 30s)  
-- *(Stretch)* **W – Firestorm:** AoE 100 DMG (CD 40s)
-
----
-
-## 🕹️ Controale
-- **1/2/3:** Spawnează unități  
-- **Q:** Abilitate Rally  
-- **U:** Deschide Upgrade Panel  
-- **ESC:** Pauză / Settings
-
----
-
-## 🗂️ Structura proiectului (Unity)
-
+## 🗂️ Structură proiect (rezumat)
 ```
 Assets/
-	Art/
-	Audio/
-	Prefabs/
-		Units/
-		Base/
-		Projectiles/
-	Scenes/
-		Main.unity
-		Game.unity
-	Scripts/
-		Core/
-		Combat/
-		Units/
-		AI/
-		Economy/
-		UI/
-		Abilities/
-		Data/
-	units.json
-	upgrades.json
-	tiers.json
+  Scenes/
+    Menu.unity
+    SampleScene.unity
+  Scripts/
+    Core/ (GameManager, InputManager, UnitSpawner, CameraController)
+    Units/ (Unit, BaseUnit, Projectile)
+    UI/ (HUD, Health Bars, UnitSpawnerUI)
+  units.json
+  upgrades.json
 ```
 
 ---
 
-## 🤖 AI – Curbă dificultate
-- Buget inițial: 150 AUR / 30s  
-- Crește cu +15% pe minut  
-- Compoziție: 70% Soldați, 20% Arcași, 10% Tanc → gradual 40/30/30  
-- CD global spawn: 0.6s
+## 📌 Notițe importante
+- Fișierele JSON există în proiect, dar **nu sunt încă încărcate la runtime**.
+- Abilitatea Rally și panoul de upgrade sunt doar **placeholder** în input.
 
 ---
 
-## 👥 Împărțirea taskurilor
-
-### 👤 Dev A — Gameplay & Combat
-- Mișcare unități + coliziune melee  
-- Health/Damage/Death system  
-- Turret auto-fire  
-- Implementare unități din JSON  
-- Abilitate Rally  
-
----
-
-### 👤 Dev B — Economie, AI & Progresie
-- Aur/sec + XP + Upgrade Manager  
-- Tech Tiers & multiplicatori  
-- AI Spawner & curba de dificultate  
-- Win/Lose conditions + scor final
-- Feedback & evenimente OnKill
-
----
-
-### 👤 Dev C — UI/UX, Audio & Build
-- HUD complet (aur, xp, tier, hp baze)  
-- Panou upgrade-uri (U)  
-- Animații + SFX spawn/hit/death  
-- Pauză / Settings / Victory-Defeat  
-- Build pipeline & polish final
-
----
-
-## 🗓️ Plan 40h (2 sprinturi)
-
-### Sprint 1 – MVP jucabil (~20h)
-- A: Combat + 3 unități
-- B: Aur/sec + AI v1 + Win/Lose
-- C: HUD minimal + spawn + pauză  
-
-✅ Poți câștiga/pierde un meci complet (~5 min)
-
-### Sprint 2 – Polish & Upgrade-uri (~20h)
-- A: Turret + Rally
-- B: Upgrade panel + Tech tiers
-- C: SFX + Victory/Defeat + build final  
-
----
-
-## 🧪 Balancing
-- TTK Soldat vs Soldat ≈ 9s  
-- Time-to-Win: 4 min (Normal) / 7–8 min (Hard)  
-- AUR/sec minim: 3  
-- CD spawn: 0.8s / 1.2s / 1.5s
-
-# ProiectCTIJ
+## ▶️ Rulare
+1. Deschide proiectul în **Unity 2022.3 LTS**.
+2. Rulează scena **Menu** sau direct **SampleScene**.

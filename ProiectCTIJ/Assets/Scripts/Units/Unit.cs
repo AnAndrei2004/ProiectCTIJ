@@ -1,5 +1,6 @@
 using UnityEngine;
 using System;
+using System.Collections.Generic;
 
 public enum Team { Player, Enemy }
 
@@ -45,6 +46,7 @@ public class Unit : MonoBehaviour
 
     [Header("Components")]
     private Animator animator;
+    private Collider2D mainCollider;
 
     private bool hasCastTrigger;
     
@@ -64,9 +66,19 @@ public class Unit : MonoBehaviour
     // Small gap to keep between allies so physics never starts pushing.
     private const float AllyQueueGap = 0.18f;
 
+    private readonly HashSet<Collider2D> ignoredAllyColliders = new HashSet<Collider2D>();
+
+    public bool AllowsAlliesToPassThrough()
+    {
+        if (!isRanged) return false;
+        if (currentTarget == null || currentTarget.currentHP <= 0) return false;
+        return currentTargetEdgeDistance <= attackRange + 0.15f;
+    }
+
     protected virtual void Start()
     {
         animator = GetComponent<Animator>();
+        mainCollider = GetComponent<Collider2D>();
         
         // DEZACTIVEAZĂ ROOT MOTION - altfel animațiile mișcă unitățile pe Y!
         if (animator != null)
@@ -211,6 +223,8 @@ public class Unit : MonoBehaviour
     {
         if (currentHP <= 0) return;
 
+        RefreshAllyPassThrough();
+
         // If the casting animation event is missing/misconfigured, still fire after a short delay.
         if (pendingRangedShot && Time.time >= pendingRangedFireTime)
         {
@@ -277,8 +291,8 @@ public class Unit : MonoBehaviour
 
     void DetectEnemy()
     {
-        // Pentru detectarea țintelor, folosim un range mai mare (inclusiv pentru bazele)
-        float detectionRange = Mathf.Max(attackRange, 2f); // Minim 2 pentru a detecta bazele
+        // Pentru detectarea țintelor, folosim un range mai mare (baza poate fi mai sus pe Y)
+        float detectionRange = Mathf.Max(attackRange, 6f); // minim 6 ca să prindă și bazele
         Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, detectionRange);
         
         currentTarget = null;
@@ -297,7 +311,7 @@ public class Unit : MonoBehaviour
             Unit targetUnit = hit.GetComponentInParent<Unit>();
             if (targetUnit != null && targetUnit.team != this.team && targetUnit.currentHP > 0)
             {
-                float distance = Vector2.Distance(transform.position, targetUnit.transform.position);
+                float distance = Mathf.Abs(targetUnit.transform.position.x - transform.position.x);
 
                 // Nu targeta lucruri "în spate" (previne comportamente ciudate când se suprapun / trec unul de altul)
                 float deltaX = targetUnit.transform.position.x - transform.position.x;
@@ -393,7 +407,7 @@ public class Unit : MonoBehaviour
         if (pendingRangedTarget == null || pendingRangedTarget.currentHP <= 0) return;
 
         // Dacă ținta a ieșit din range până la momentul lansării (animation event / fallback timer), anulăm shot-ul.
-        float centerDistance = Vector2.Distance(transform.position, pendingRangedTarget.transform.position);
+        float centerDistance = Mathf.Abs(pendingRangedTarget.transform.position.x - transform.position.x);
         float edgeDistanceNow = GetEdgeDistanceTo(pendingRangedTarget, centerDistance);
         if (edgeDistanceNow > attackRange + 0.15f)
         {
@@ -507,6 +521,10 @@ public class Unit : MonoBehaviour
         if (currentTarget != null && currentTarget.currentHP > 0 && currentTargetEdgeDistance <= attackRange + 0.02f)
             return false;
 
+        // If we're targeting a base, allow stacking to maximize damage.
+        if (currentTarget is BaseUnit)
+            return false;
+
         float probeDistance = 0.35f;
         Vector2 probeCenter = new Vector2(transform.position.x + direction * probeDistance, transform.position.y);
         float probeRadius = 0.25f;
@@ -520,6 +538,10 @@ public class Unit : MonoBehaviour
 
             Unit other = hit.GetComponent<Unit>();
             if (other == null || other.currentHP <= 0) continue;
+
+            // Allow passing through allied ranged units that are actively attacking.
+            if (other.team == this.team && other.AllowsAlliesToPassThrough())
+                continue;
 
             // Only queue behind allies.
             if (other.team != this.team) continue;
@@ -536,6 +558,53 @@ public class Unit : MonoBehaviour
         }
 
         return false;
+    }
+
+    private void RefreshAllyPassThrough()
+    {
+        if (mainCollider == null) return;
+
+        const float passThroughRadius = 1.2f;
+        Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, passThroughRadius);
+        if (hits == null) return;
+
+        HashSet<Collider2D> shouldIgnore = new HashSet<Collider2D>();
+
+        foreach (Collider2D hit in hits)
+        {
+            if (hit == null || hit == mainCollider) continue;
+
+            Unit other = hit.GetComponentInParent<Unit>();
+            if (other == null || other == this) continue;
+            if (other.team != this.team) continue;
+            if (other is BaseUnit) continue;
+
+            if (other.AllowsAlliesToPassThrough())
+            {
+                shouldIgnore.Add(hit);
+                if (!ignoredAllyColliders.Contains(hit))
+                {
+                    Physics2D.IgnoreCollision(mainCollider, hit, true);
+                    ignoredAllyColliders.Add(hit);
+                }
+            }
+        }
+
+        if (ignoredAllyColliders.Count == 0) return;
+
+        List<Collider2D> toRemove = new List<Collider2D>();
+        foreach (var col in ignoredAllyColliders)
+        {
+            if (col == null || !shouldIgnore.Contains(col))
+            {
+                if (col != null)
+                    Physics2D.IgnoreCollision(mainCollider, col, false);
+                toRemove.Add(col);
+            }
+        }
+
+        foreach (var col in toRemove)
+            ignoredAllyColliders.Remove(col);
     }
 
     private float GetEdgeDistanceTo(Unit other, float centerDistance)
