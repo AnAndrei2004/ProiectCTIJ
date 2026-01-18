@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.Collections.Generic;
 
 public class UnitSpawnerUI : MonoBehaviour
 {
@@ -13,11 +14,26 @@ public class UnitSpawnerUI : MonoBehaviour
     [Header("Cooldown Display")]
     public TextMeshProUGUI spawnCooldownText;
     
+    [Header("Unit Data")]
+    public Sprite[] unitHeadSprites = new Sprite[3]; // Iconite pentru unitati
+    
     private float lastSpawnTime = -999f;
+    private List<UnitData> unitsData = new List<UnitData>();
+
+    // Structura pentru informatiile unitatii
+    private class UnitData
+    {
+        public string name;
+        public int cost;
+        public string id;
+    }
 
     // Initializeaza butoanele si textele UI pentru unitati.
     private void Start()
     {
+        // Incarca datele unitatilor din JSON
+        LoadUnitData();
+        
         // Conecteaza butoanele cu functii de spawn
         for (int i = 0; i < unitButtons.Length; i++)
         {
@@ -28,13 +44,44 @@ public class UnitSpawnerUI : MonoBehaviour
             }
             
             // Actualizeaza textele cu informatii despre unitate
-            if (unitNameTexts[i] != null && UnitSpawner.Instance != null)
+            if (i < unitsData.Count)
             {
-                unitNameTexts[i].text = UnitSpawner.Instance.GetPlayerUnitName(i);
+                if (unitNameTexts[i] != null)
+                {
+                    unitNameTexts[i].text = unitsData[i].name;
+                }
+                if (unitCostTexts[i] != null)
+                {
+                    unitCostTexts[i].text = $"${unitsData[i].cost}";
+                }
+                if (unitIcons[i] != null && unitHeadSprites[i] != null)
+                {
+                    unitIcons[i].sprite = unitHeadSprites[i];
+                }
             }
-            if (unitCostTexts[i] != null && UnitSpawner.Instance != null)
+        }
+    }
+
+    // Incarca datele unitatilor din fisierul JSON
+    private void LoadUnitData()
+    {
+        TextAsset jsonFile = Resources.Load<TextAsset>("units");
+        if (jsonFile == null)
+        {
+            jsonFile = Resources.Load<TextAsset>("Assets/units");
+        }
+        
+        if (jsonFile != null)
+        {
+            UnitArray unitArray = JsonUtility.FromJson<UnitArray>("{\"units\":" + jsonFile.text + "}");
+            foreach (var unit in unitArray.units)
             {
-                unitCostTexts[i].text = $"${UnitSpawner.Instance.GetPlayerUnitCost(i)}";
+                unitsData.Add(new UnitData
+                {
+                    name = unit.name,
+                    cost = unit.cost,
+                    id = unit.id
+                });
             }
         }
     }
@@ -88,5 +135,30 @@ public class UnitSpawnerUI : MonoBehaviour
         {
             unitIcons[index].sprite = sprite;
         }
+        if (index >= 0 && index < unitHeadSprites.Length)
+        {
+            unitHeadSprites[index] = sprite;
+        }
+    }
+
+    // Clasa auxiliara pentru deserializarea JSON
+    [System.Serializable]
+    private class Unit
+    {
+        public string id;
+        public string name;
+        public int cost;
+        public int hp;
+        public int damage;
+        public float attackRate;
+        public int speed;
+        public int range;
+        public string description;
+    }
+
+    [System.Serializable]
+    private class UnitArray
+    {
+        public Unit[] units;
     }
 }
