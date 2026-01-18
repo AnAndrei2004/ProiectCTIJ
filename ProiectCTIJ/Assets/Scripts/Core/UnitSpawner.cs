@@ -213,16 +213,16 @@ public class UnitSpawner : MonoBehaviour
         if (prefab == null) return 0;
         string name = prefab.name;
 
-        // Heavy
-        if (name.Contains("Soldier") || name.Contains("Knight") || name.Contains("Merchant"))
-            return 35;
+        // Tank
+        if (name.Contains("Soldier") || name.Contains("Knight"))
+            return 50;
 
         // Light
-        if (name.Contains("Thief") || name.Contains("Peasant"))
+        if (name.Contains("Thief") || name.Contains("Merchant"))
             return 20;
 
         // Ranged
-        if (name.Contains("Priest"))
+        if (name.Contains("Peasant") || name.Contains("Priest"))
             return 30;
 
         // Fallback

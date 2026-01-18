@@ -139,28 +139,28 @@ public class Unit : MonoBehaviour
         float presetAttackRate = attackRate;
         bool presetIsRanged = isRanged;
 
-        // Roluri: Soldier (heavy), Thief (fast/low dmg), Priest (ranged mid dmg / low hp)
-        if (nameOnly.Contains("Soldier", StringComparison.OrdinalIgnoreCase) ||
-            nameOnly.Contains("Knight", StringComparison.OrdinalIgnoreCase) ||
-            nameOnly.Contains("Merchant", StringComparison.OrdinalIgnoreCase))
+        // Roluri: Tank (Knight/Soldier), Light (Thief/Merchant), Ranged (Peasant/Priest)
+        if (nameOnly.Contains("Knight", StringComparison.OrdinalIgnoreCase) ||
+            nameOnly.Contains("Soldier", StringComparison.OrdinalIgnoreCase))
         {
-            // Heavy/frontliner
-            presetHp = 160f;
-            presetDamage = 14f;
-            presetSpeed = 1.5f;
+            // Tank
+            presetHp = 200f;
+            presetDamage = 15f;
+            presetSpeed = 1.8f;
             presetRange = 0.9f;
             presetAttackRate = 1.0f;
             presetIsRanged = false;
 
-            cost = 35;
+            cost = 50;
             killReward = 20;
         }
-        else if (nameOnly.Contains("Thief", StringComparison.OrdinalIgnoreCase))
+        else if (nameOnly.Contains("Thief", StringComparison.OrdinalIgnoreCase) ||
+                 nameOnly.Contains("Merchant", StringComparison.OrdinalIgnoreCase))
         {
-            // Fast/light (half dmg vs Soldier)
-            presetHp = 110f;
+            // Light
+            presetHp = 100f;
             presetDamage = 7f;
-            presetSpeed = 2.8f;
+            presetSpeed = 2.5f;
             presetRange = 0.9f;
             presetAttackRate = 0.9f;
             presetIsRanged = false;
@@ -170,36 +170,29 @@ public class Unit : MonoBehaviour
         }
         else if (nameOnly.Contains("Peasant", StringComparison.OrdinalIgnoreCase))
         {
-            // Archer (ranged). Are nevoie de projectilePrefab pe prefab.
-            presetHp = 75f;
-            presetDamage = 6.4f;   // -20% damage
-            presetSpeed = 2.2f;
-            presetRange = 8f;     // -2 range
+            // Ranged (archer). Are nevoie de projectilePrefab pe prefab.
+            presetHp = 70f;
+            presetDamage = 8f;
+            presetSpeed = 2.3f;
+            presetRange = 8f;
             presetAttackRate = 0.85f;
-            presetIsRanged = (projectilePrefab != null);
+            presetIsRanged = true;
 
-            if (!presetIsRanged)
+            if (projectilePrefab == null)
             {
-                // Daca nu exista proiectil, revine la melee light.
-                presetHp = 110f;
-                presetDamage = 7f;
-                presetSpeed = 2.8f;
-                presetRange = 0.9f;
-                presetAttackRate = 0.9f;
-                presetIsRanged = false;
-                Debug.LogWarning($"{gameObject.name}: Peasant is missing projectilePrefab; falling back to melee preset.");
+                Debug.LogWarning($"{gameObject.name}: Peasant is missing projectilePrefab; unitatea ramane ranged dar nu va trage proiectile.");
             }
 
-            cost = presetIsRanged ? 28 : 20;
-            killReward = presetIsRanged ? 16 : 12;
+            cost = 30;
+            killReward = 16;
         }
         else if (nameOnly.Contains("Priest", StringComparison.OrdinalIgnoreCase))
         {
-            // Ranged support
-            presetHp = 80f;
-            presetDamage = 8f;    // -20% damage
-            presetSpeed = 2.0f;
-            presetRange = 8f;     // -2 range
+            // Ranged
+            presetHp = 70f;
+            presetDamage = 8f;
+            presetSpeed = 2.3f;
+            presetRange = 8f;
             presetAttackRate = 1.1f;
             presetIsRanged = true;
 

@@ -6,7 +6,7 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance { get; private set; }
 
     [Header("Economy")]
-    public float currentGold = 100f;
+    public float currentGold = 200f;
     public float goldPerSecond = 3f;
 
     [Header("Game State")]

@@ -2042,9 +2042,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5898fe8bb5dbb4f448637dbca04fb4c1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
-  currentGold: 100
-  currentXP: 0
-  currentTier: 1
+  currentGold: 200
   goldPerSecond: 3
   isGameOver: 0
   isPaused: 0
