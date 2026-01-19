@@ -26,7 +26,7 @@ public class InputManager : MonoBehaviour
 
         // UI
         if (keyboard.uKey.wasPressedThisFrame) ToggleUpgradePanel();
-        if (keyboard.escapeKey.wasPressedThisFrame) GameManager.Instance.TogglePause();
+       //PAUSE MENU CREATED if (keyboard.escapeKey.wasPressedThisFrame) GameManager.Instance.TogglePause();
     }
 
     // Placeholder pentru abilitatea Rally.
