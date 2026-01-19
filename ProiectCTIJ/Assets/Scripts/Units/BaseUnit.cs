@@ -107,22 +107,13 @@ public class BaseUnit : Unit
             Destroy(explosion, 5f);
         }
         
-        // Asteapta cateva secunde pentru a vedea explozia inainte de a termina jocul
+        // Termina jocul dupa un delay ca sa se vada explozia
         if (GameManager.Instance != null)
         {
-            StartCoroutine(DelayedEndGame());
+            GameManager.Instance.EndGameAfterDelay(3f, !isPlayerBase);
         }
         
-        Destroy(gameObject, 0.5f);
-    }
-
-    // Termina jocul dupa un mic delay.
-    System.Collections.IEnumerator DelayedEndGame()
-    {
-        // Asteapta 3 secunde pentru a vedea explozia
-        yield return new WaitForSeconds(3f);
-        
-        // Acum terminam jocul
-        GameManager.Instance.EndGame(!isPlayerBase);
+        // Pastreaza baza inca putin pentru animatie
+        Destroy(gameObject, 3f);
     }
 }

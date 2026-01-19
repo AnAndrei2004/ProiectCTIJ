@@ -16,6 +16,7 @@ public class GameManager : MonoBehaviour
     public event Action OnGoldChanged;
     public event Action<bool> OnGameOver;
 
+
     // Initializeaza singletonul GameManager.
     private void Awake()
     {
@@ -58,9 +59,28 @@ public class GameManager : MonoBehaviour
     // Marcheaza sfarsitul jocului si opreste timpul.
     public void EndGame(bool playerWon)
     {
+        if (isGameOver) return;
         isGameOver = true;
         OnGameOver?.Invoke(playerWon);
+        GameOverUI gameOverUI = FindObjectOfType<GameOverUI>(true);
+        if (gameOverUI != null)
+        {
+            gameOverUI.Show(playerWon);
+        }
         Time.timeScale = 0f;
+    }
+
+    // Termina jocul dupa un delay (foloseste timp real, independent de Time.timeScale).
+    public void EndGameAfterDelay(float delaySeconds, bool playerWon)
+    {
+        if (isGameOver) return;
+        StartCoroutine(EndGameAfterDelayRoutine(delaySeconds, playerWon));
+    }
+
+    private System.Collections.IEnumerator EndGameAfterDelayRoutine(float delaySeconds, bool playerWon)
+    {
+        yield return new WaitForSecondsRealtime(delaySeconds);
+        EndGame(playerWon);
     }
 
     // Comuta pauza jocului.
