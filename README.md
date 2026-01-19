@@ -41,7 +41,7 @@ Proiect Unity 2D tip **lane battler** (o singură bandă). Jucătorul și AI-ul 
 
 ---
 
-## ✅ Taskuri implementate (15)
+## ✅ Taskuri implementate (16)
 1. Introducere pause menu.
 2. Stack la baze: unitățile nu se mai blochează între ele când lovesc o bază (maxim de damage).
 3. Scenă de meniu cu buton Play si quit.
@@ -57,6 +57,7 @@ Proiect Unity 2D tip **lane battler** (o singură bandă). Jucătorul și AI-ul 
 13. AI simplu pentru spawn inamici (pattern).
 14. Cameră cu scroll pe margini (follow cursor).
 15. Fixuri diverse: animații, culori inamici, materiale/prefaburi.
+16. MENIU-l de final.
 
 ---
 

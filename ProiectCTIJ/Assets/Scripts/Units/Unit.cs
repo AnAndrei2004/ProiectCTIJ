@@ -487,7 +487,7 @@ public class Unit : MonoBehaviour
         if (!hasUnitScript && !hasAnimator)
             return;
 
-        // Dezactiveaza AI-ul si physics pe proiectil (sa nu se comporte ca o unitate)
+        // Dezactiveaza logica de unitate si physics pe proiectil (sa nu se comporte ca o unitate)
         Unit[] units = proj.GetComponentsInChildren<Unit>(true);
         foreach (var u in units) if (u != null) u.enabled = false;
         

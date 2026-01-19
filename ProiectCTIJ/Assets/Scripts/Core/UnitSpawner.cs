@@ -33,12 +33,10 @@ public class UnitSpawner : MonoBehaviour
     // Ruleaza logica de spawn AI pentru inamici.
     private void Update()
     {
-        // AI simplu pentru spawn inamici
         if (Time.time >= nextEnemySpawnTime && GameManager.Instance != null && !GameManager.Instance.isGameOver)
         {
             SpawnStrategicEnemyUnit();
 
-            // Pacing lent, usor randomizat
             float interval = Mathf.Max(enemySpawnInterval, 5f);
             nextEnemySpawnTime = Time.time + Random.Range(interval * 0.9f, interval * 1.25f);
         }
@@ -93,7 +91,6 @@ public class UnitSpawner : MonoBehaviour
     {
         if (enemyPrefabs == null || enemyPrefabs.Length == 0) return;
 
-        // Pattern simplu: Heavy -> Ranged -> Light -> Light (repeat)
         EnemyRole desiredRole;
         switch (enemySpawnStep % 4)
         {
@@ -111,7 +108,6 @@ public class UnitSpawner : MonoBehaviour
         int index = FindEnemyPrefabIndex(desiredRole);
         if (index < 0)
         {
-            // Fallback: random daca rolul nu exista
             index = Random.Range(0, enemyPrefabs.Length);
         }
 

@@ -3,56 +3,161 @@ using UnityEngine;
 public class AISpawner : MonoBehaviour
 {
     public float initialBudget = 150f;
-    public float budgetIncreaseRate = 0.15f; // 15% pe minut
+    public float budgetIncreaseRate = 0.15f;
+    public float baseIncomePerSecond = 3f;
     
     private float currentBudget = 0f;
     private float timer = 0f;
-    private float spawnCooldown = 1.5f;
-    private float lastSpawnTime = 0f;
+    private float spawnCooldown = 2f;
+    private float lastSpawnTime = -999f;
+    private float currentIncomePerSecond = 0f;
+    private int spawnStep = 0;
 
-    // Initializeaza bugetul AI.
     private void Start()
     {
         currentBudget = initialBudget;
+        currentIncomePerSecond = baseIncomePerSecond;
     }
 
-    // Update pentru buget si spawn AI.
     private void Update()
     {
-        if (GameManager.Instance.isGameOver) return;
+        if (GameManager.Instance != null && GameManager.Instance.isGameOver) return;
 
         timer += Time.deltaTime;
+        currentBudget += currentIncomePerSecond * Time.deltaTime;
         
-        // Creste bugetul in timp
         if (timer >= 60f)
         {
-            currentBudget *= (1f + budgetIncreaseRate);
+            currentIncomePerSecond *= (1f + budgetIncreaseRate);
             timer = 0f;
         }
 
-        // Logica de spawn AI
         if (Time.time >= lastSpawnTime + spawnCooldown)
         {
             TrySpawnEnemy();
         }
     }
 
-    // Spawneaza un inamic pe baza unei distributii simple.
     private void TrySpawnEnemy()
     {
-        // AI simplu: 70% Soldier, 20% Archer, 10% Tank
-        float rand = Random.value;
-        int unitIndex = 0;
+        if (UnitSpawner.Instance == null || UnitSpawner.Instance.enemyPrefabs == null || UnitSpawner.Instance.enemyPrefabs.Length == 0)
+            return;
 
-        if (rand < 0.7f) unitIndex = 0; // Soldier
-        else if (rand < 0.9f) unitIndex = 2; // Archer
-        else unitIndex = 1; // Tank
+        EnemyRole desiredRole = GetDesiredRole();
+        int unitIndex = FindBestAffordableByRole(desiredRole);
+        if (unitIndex < 0)
+        {
+            unitIndex = FindMostExpensiveAffordable();
+        }
 
-        // In joc real am verifica gold-ul AI; aici folosim doar cooldown
+        if (unitIndex < 0)
+            return;
+
+        int cost = GetCostForPrefab(UnitSpawner.Instance.enemyPrefabs[unitIndex]);
+        if (cost > currentBudget)
+            return;
+
         UnitSpawner.Instance.SpawnUnit(unitIndex, Team.Enemy);
+        currentBudget -= cost;
         lastSpawnTime = Time.time;
-        
-        // Randomizeaza timpul pentru urmatorul spawn
-        spawnCooldown = Random.Range(1.0f, 3.0f);
+        spawnCooldown = GetCooldownForBudget();
+        spawnStep++;
     }
+
+    private EnemyRole GetDesiredRole()
+    {
+        switch (spawnStep % 4)
+        {
+            case 0:
+                return EnemyRole.Heavy;
+            case 1:
+                return EnemyRole.Ranged;
+            default:
+                return EnemyRole.Light;
+        }
+    }
+
+    private int FindBestAffordableByRole(EnemyRole role)
+    {
+        int bestIndex = -1;
+        int bestCost = -1;
+
+        for (int i = 0; i < UnitSpawner.Instance.enemyPrefabs.Length; i++)
+        {
+            GameObject prefab = UnitSpawner.Instance.enemyPrefabs[i];
+            if (prefab == null) continue;
+
+            if (GetRoleForPrefab(prefab) != role) continue;
+
+            int cost = GetCostForPrefab(prefab);
+            if (cost <= currentBudget && cost > bestCost)
+            {
+                bestCost = cost;
+                bestIndex = i;
+            }
+        }
+
+        return bestIndex;
+    }
+
+    private int FindMostExpensiveAffordable()
+    {
+        int bestIndex = -1;
+        int bestCost = -1;
+
+        for (int i = 0; i < UnitSpawner.Instance.enemyPrefabs.Length; i++)
+        {
+            GameObject prefab = UnitSpawner.Instance.enemyPrefabs[i];
+            if (prefab == null) continue;
+
+            int cost = GetCostForPrefab(prefab);
+            if (cost <= currentBudget && cost > bestCost)
+            {
+                bestCost = cost;
+                bestIndex = i;
+            }
+        }
+
+        return bestIndex;
+    }
+
+    private float GetCooldownForBudget()
+    {
+        if (currentBudget >= 150f) return 1.5f;
+        if (currentBudget >= 80f) return 2.0f;
+        return 2.5f;
+    }
+
+    private EnemyRole GetRoleForPrefab(GameObject prefab)
+    {
+        if (prefab == null) return EnemyRole.Light;
+        string name = prefab.name;
+
+        if (name.Contains("Soldier") || name.Contains("Knight") || name.Contains("Merchant"))
+            return EnemyRole.Heavy;
+
+        if (name.Contains("Priest"))
+            return EnemyRole.Ranged;
+
+        return EnemyRole.Light;
+    }
+
+    private int GetCostForPrefab(GameObject prefab)
+    {
+        if (prefab == null) return 0;
+        string name = prefab.name;
+
+        if (name.Contains("Soldier") || name.Contains("Knight"))
+            return 50;
+
+        if (name.Contains("Thief") || name.Contains("Merchant"))
+            return 20;
+
+        if (name.Contains("Peasant") || name.Contains("Priest"))
+            return 30;
+
+        return 25;
+    }
+
+    private enum EnemyRole { Heavy, Light, Ranged }
 }
