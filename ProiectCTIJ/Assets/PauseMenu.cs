@@ -9,7 +9,7 @@ public class PauseMenu : MonoBehaviour
 
     public static bool GameIsPaused = false;
     public GameObject PauseMenuUI;
-    // Update is called once per frame
+    // Update e calluit o data pe frame
     void Update()
     {
         if(Keyboard.current.escapeKey.wasPressedThisFrame)
